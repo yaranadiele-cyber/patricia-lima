@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quem Sou - {{ config['nome'] }}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+<div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+
+<div class="vidro-container">
+
+{% if config['logo'] %}
+<img src="{{ config['logo'] }}" class="foto-perfil">
+{% else %}
+<div class="foto-perfil" style="background:#eee;display:flex;align-items:center;justify-content:center;">
+Sem Foto
+</div>
+{% endif %}
+
+<h1 class="nome-perfil">{{ config['nome'] }}</h1>
+<span class="profissao-perfil">{{ config['profissao'] }}</span>
+
+<div class="texto-bio">
+{{ config['texto_quem_sou']|safe|replace('\n','<br>') }}
+</div>
+
+<div class="botoes-redes">
+{% if config['instagram'] %}
+<a href="https://instagram.com/{{ config['instagram']|replace('@','') }}" class="btn-insta" target="_blank">Instagram</a>
+{% endif %}
+
+{% if config['whatsapp'] %}
+<a href="https://wa.me/{{ config['whatsapp'] }}" class="btn-whats" target="_blank">WhatsApp</a>
+{% endif %}
+</div>
+
+</div>
+
+<a href="{{ url_for('index') }}" class="btn-voltar-vidro">← Voltar</a>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Allura&display=swap" rel="stylesheet">
+    <title>Editar Serviço</title>
+<body>
+
+<div class="container">
+
+<h2>Editar Serviço</h2>
+
+<form method="POST" enctype="multipart/form-data">
+    <input type="text" name="nome" value="{{ servico[1] }}" required>
+    <input type="text" name="preco" value="{{ servico[2] }}" required>
+    <input type="text" name="descricao" value="{{ servico[3] }}" required>
+    <input type="file" name="imagem">
+    <button type="submit">Salvar Alterações</button>
+</form>
+
+<br>
+<a href="/admin">Voltar</a>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patricia Lima</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Allura&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        /* AJUSTE DAS FONTES DO LOGO */
+        .logo h1 { 
+            font-family: 'Allura', cursive; 
+            font-size: 4.5rem; 
+            color: #6f4b44; 
+            margin: 0; 
+            line-height: 1;
+        }
+
+        .logo h2 { 
+            font-family: 'Allura', cursive; /* MESMA FONTE DO PL */
+            font-size: 3rem; /* Tamanho ajustado para harmonia */
+            color: #6f4b44; 
+            margin-top: -10px; /* Aproxima do PL */
+            font-weight: normal;
+        }
+
+        .logo p {
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #6f4b44;
+            opacity: 0.8;
+        }
+
+        /* ESTILO DO CARROSSEL COM FOCO DINÂMICO */
+        .carousel {
+            width: 100%;
+            overflow: hidden;
+            padding: 20px 0;
+            position: relative;
+        }
+
+        .carousel-viewport {
+            display: flex;
+            justify-content: center;
+            overflow: visible;
+        }
+
+        .carousel-track {
+            display: flex;
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            gap: 15px;
+            align-items: center;
+        }
+
+        .carousel-track img {
+            width: 110px; /* Tamanho fixo para controle do layout */
+            height: 160px; /* Tamanho fixo para controle do layout */
+            object-fit: cover;
+            border-radius: 20px;
+            transition: all 0.8s ease;
+            filter: blur(5px); 
+            opacity: 0.4;
+            transform: scale(0.8);
+        }
+
+        .carousel-track img.active {
+            filter: blur(0);
+            opacity: 1;
+            transform: scale(1.05);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            z-index: 10;
+        }
+
+    
+
+        .links a { 
+            background: rgba(255,255,255,0.3); 
+            padding: 15px; 
+            border-radius: 30px; 
+            text-decoration: none; 
+            color: #6f4b44; 
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.5);
+            transition: 0.3s;
+        }
+
+        .links a:hover { transform: scale(1.05); background: rgba(255,255,255,0.5); }
+    </style>
+</head>
+
+<body>
+
+<div class="admin-glass">
+    <a href="{{ url_for('login') }}">
+        <img src="{{ url_for('static', filename='logologin.png') }}" alt="Admin">
+    </a>
+</div>
+
+<div class="container">
+
+    <div class="logo">
+        <h1>PL</h1>
+        <h2>Patricia Lima</h2>
+        <p>Beleza que realça você</p>
+    </div> 
+
+    <div class="carousel">
+        <div class="carousel-track" id="track">
+{% if imagens %}
+    {% for img in imagens %}
+        <img src="{{ img['imagem'] }}" class="carousel-item">
+    {% endfor %}
+    {% for img in imagens %}
+        <img src="{{ img['imagem'] }}" class="carousel-item">
+    {% endfor %}
+{% endif %}
+</div>
+        </div> 
+    </div>
+
+    <h3>Meus Links</h3>
+
+    <div class="links">
+        <a href="{{ url_for('quemsou') }}">👤 Quem sou</a>
+        <a href="{{ url_for('atendimento') }}">📋 Pré-Atendimento</a>
+        <a href="https://wa.me/{{ config['whatsapp'] if config['whatsapp'] else '' }}" target="_blank">📱 WhatsApp</a>
+        <a href="{{ config['localizacao'] if config['localizacao'] else '#' }}" target="_blank">📍 Localização</a>
+    </div>
+
+</div>
+
+ <footer class="rodape">
+    <div class="rodape-conteudo">
+        <p>&copy; <span id="ano-atual"></span> Patricia Lima — Todos os direitos reservados.</p>
+        <p class="assinatura">Desenvolvido por <a href="https://seulink.com" target="_blank">NY Design Web</a></p>
+    </div>
+</footer>
+
+<script>
+    // Coloca o ano atual automaticamente
+    document.getElementById('ano-atual').textContent = new Date().getFullYear();
+</script>
+
+<script>
+    const track = document.getElementById('track');
+    const items = document.querySelectorAll('.carousel-item');
+    let currentIndex = 0;
+    const totalItems = items.length;
+
+    function moveCarousel() {
+        if (totalItems === 0) return;
+        currentIndex++;
+        
+        if (currentIndex >= totalItems / 2 + 1) {
+            track.style.transition = 'none';
+            currentIndex = 1;
+            const offset = calculateOffset(currentIndex);
+            track.style.transform = `translateX(${offset}px)`;
+            void track.offsetWidth; 
+            track.style.transition = 'transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+        }
+
+        const offset = calculateOffset(currentIndex);
+        track.style.transform = `translateX(${offset}px)`;
+        
+        items.forEach((item, index) => {
+            item.classList.remove('active');
+            if (index === currentIndex) {
+                item.classList.add('active');
+            }
+        });
+    }
+
+    function calculateOffset(index) {
+    const item = document.querySelector('.carousel-item');
+    if (!item) return 0;
+
+    const itemWidth = item.offsetWidth + 15; // largura real + gap
+    const centerOffset = (window.innerWidth / 2) - (item.offsetWidth / 2);
+
+    return -index * itemWidth + centerOffset;
+}
+
+    if (items.length > 0) {
+        items[0].classList.add('active');
+        const initialOffset = calculateOffset(0);
+        track.style.transform = `translateX(${initialOffset}px)`;
+        setInterval(moveCarousel, 3000);
+    }
+
+    window.addEventListener('resize', () => {
+        const offset = calculateOffset(currentIndex);
+        track.style.transform = `translateX(${offset}px)`;
+    });
+</script>
+
+</body>
+</html>

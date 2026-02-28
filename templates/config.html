@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Editar Serviço</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<link href="https://fonts.googleapis.com/css2?family=Allura&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="container">
+
+<h2>Editar Página Quem Sou</h2>
+
+<form method="POST" enctype="multipart/form-data">
+
+<input type="text" name="nome" value="{{ config[4] }}" placeholder="Nome">
+
+<input type="text" name="profissao" value="{{ config[5] }}" placeholder="Profissão">
+
+<textarea name="texto">{{ config[1] }}</textarea>
+
+<input type="color" name="cor" value="{{ config[2] }}">
+
+<input type="file" name="foto">
+
+<button type="submit">Salvar Alterações</button>
+
+</form>
+
+<br>
+<a href="/admin">Voltar</a>
+
+</div>
+
+</body>
+</html>

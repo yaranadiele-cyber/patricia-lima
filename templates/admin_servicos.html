@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Gerenciar Serviços - Patricia Lima</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Allura&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        .titulo-servicos { font-family: 'Allura', cursive; font-size: 3rem; color: #6f4b44; text-align: center; margin-bottom: 10px; }
+        label { display: block; text-align: left; margin: 15px 0 5px; color: #6f4b44; font-weight: bold; font-size: 0.9rem; }
+        
+        /* Card de Serviço no estilo Vidro */
+        .item-servico {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: 0.3s;
+        }
+
+        .btn-salvar-servico {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, #2ecc71, #27ae60);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 15px;
+            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.2);
+        }
+
+        .btn-excluir-serv {
+            color: #aa4444;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.8rem;
+            padding: 8px 12px;
+            background: rgba(170, 68, 68, 0.1);
+            border-radius: 8px;
+            transition: 0.3s;
+        }
+
+        .btn-excluir-serv:hover {
+            background: #aa4444;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container" style="max-width: 650px;">
+    <h1 class="titulo-servicos">📋 Meus Serviços</h1>
+    
+    <form method="POST" enctype="multipart/form-data">
+        <label>Nome do Serviço:</label>
+        <input type="text" name="nome" placeholder="Ex: Design de Sobrancelhas" required>
+        
+        <label>Preço:</label>
+        <input type="text" name="preco" placeholder="Ex: R$ 150,00" required>
+        
+        <label>Descrição:</label>
+        <textarea name="descricao" placeholder="Breve descrição..." rows="3" style="width: 100%; border-radius: 10px; border: 1px solid rgba(111,75,68,0.2); padding: 10px;"></textarea>
+        
+        <label>📸 Foto do Serviço:</label>
+        <input type="file" name="imagem" accept="image/*">
+        
+        <button type="submit" class="btn-salvar-servico">💾 Salvar Novo Serviço</button>
+    </form>
+
+    <hr style="border: 0; border-top: 1px solid rgba(111, 75, 68, 0.1); margin: 30px 0;">
+
+    <h3>Serviços Atuais</h3>
+    <div class="lista-servicos">
+        {% for s in servicos %}
+        <div class="item-servico">
+            {% if s['imagem'] %}
+                <img src="{{ s['imagem'] }}" style="width: 70px; height: 70px; object-fit: cover; border-radius: 12px; border: 2px solid white;">
+            {% else %}
+                <div style="width: 70px; height: 70px; background: rgba(0,0,0,0.05); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 0.6rem;">Sem foto</div>
+            {% endif %}
+            
+            <div style="flex-grow: 1;">
+                <strong style="display: block; color: #6f4b44;">{{ s['nome'] }}</strong>
+                <span style="color: #d88773; font-weight: bold;">{{ s['preco'] }}</span>
+            </div>
+            
+            <a href="{{ url_for('excluir_servico', id=s['id']) }}" class="btn-excluir-serv">
+                🗑️ Excluir
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+
+    <a href="{{ url_for('painel') }}" class="btn-voltar">⬅ Voltar ao Painel</a>
+</div>
+
+ <footer class="rodape">
+    <div class="rodape-conteudo">
+        <p>&copy; <span id="ano-atual"></span> Patricia Lima — Todos os direitos reservados.</p>
+        <p class="assinatura">Desenvolvido por <a href="https://seulink.com" target="_blank">NY Design Web</a></p>
+    </div>
+</footer>
+
+<script>
+    // Coloca o ano atual automaticamente
+    document.getElementById('ano-atual').textContent = new Date().getFullYear();
+</script>
+</body>
+</html>
