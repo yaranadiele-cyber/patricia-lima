@@ -2,8 +2,8 @@ from flask import Flask, render_template, request, redirect, session, url_for
 import os
 import cloudinary
 import cloudinary.uploader
-import psycopg2
-from psycopg2.extras import RealDictCursor
+import psycopg
+from psycopg.rows import dict_row
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
@@ -22,18 +22,13 @@ if not DATABASE_URL:
     raise ValueError("DATABASE_URL não encontrada nas variáveis de ambiente.")
 
 def get_db():
-    return psycopg2.connect(
-        DATABASE_URL,
-        cursor_factory=RealDictCursor,
-        sslmode="require"
-    )
+    return psycopg.connect(DATABASE_URL, row_factory=dict_row, sslmode="require")
 
 def init_db():
     conn = get_db()
     cur = conn.cursor()
 
     # ================= TABELAS =================
-
     cur.execute("""
         CREATE TABLE IF NOT EXISTS servicos (
             id SERIAL PRIMARY KEY,
@@ -43,14 +38,12 @@ def init_db():
             imagem TEXT
         )
     """)
-
     cur.execute("""
         CREATE TABLE IF NOT EXISTS carrossel (
             id SERIAL PRIMARY KEY,
             imagem TEXT
         )
     """)
-
     cur.execute("""
         CREATE TABLE IF NOT EXISTS admin (
             id SERIAL PRIMARY KEY,
@@ -59,14 +52,12 @@ def init_db():
             chave_recuperacao TEXT
         )
     """)
-
     cur.execute("""
         CREATE TABLE IF NOT EXISTS horarios (
             id SERIAL PRIMARY KEY,
             hora TEXT
         )
     """)
-
     cur.execute("""
         CREATE TABLE IF NOT EXISTS configuracoes (
             id SERIAL PRIMARY KEY,
@@ -84,7 +75,6 @@ def init_db():
     """)
 
     # ================= INSERÇÕES PADRÃO =================
-
     cur.execute("SELECT * FROM configuracoes LIMIT 1")
     if not cur.fetchone():
         cur.execute("""
@@ -92,7 +82,6 @@ def init_db():
             VALUES ('Patricia Lima', 'Profissional da Beleza')
         """)
 
-    # Criar admin apenas se não existir
     cur.execute("SELECT * FROM admin LIMIT 1")
     if not cur.fetchone():
         senha_hash = generate_password_hash("1234")
@@ -109,7 +98,6 @@ with app.app_context():
     init_db()
 
 # ================= FUNÇÃO CONFIG ==================
-
 def carregar_config():
     conn = get_db()
     cur = conn.cursor()
@@ -120,7 +108,6 @@ def carregar_config():
     return cfg
 
 # ================= ROTAS PÚBLICAS ==================
-
 @app.route("/")
 def index():
     conn = get_db()
@@ -151,7 +138,6 @@ def atendimento():
                            config=carregar_config())
 
 # ================= LOGIN ==================
-
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -178,7 +164,6 @@ def painel():
     return render_template("painel.html", config=carregar_config())
 
 # ================= APARÊNCIA ==================
-
 @app.route("/admin/aparencia", methods=["GET", "POST"])
 def admin_aparencia():
     if not session.get('admin'):
@@ -188,9 +173,7 @@ def admin_aparencia():
     cur = conn.cursor()
 
     if request.method == "POST":
-
         file = request.files.get('foto_perfil')
-
         if file and file.filename != '':
             resultado = cloudinary.uploader.upload(
                 file,
@@ -233,7 +216,6 @@ def admin_aparencia():
     return render_template("admin_aparencia.html", config=carregar_config())
 
 # ================= SERVIÇOS ==================
-
 @app.route("/admin/servicos", methods=["GET", "POST"])
 def admin_servicos():
     if not session.get('admin'):
@@ -249,7 +231,6 @@ def admin_servicos():
         file = request.files.get('imagem')
 
         imagem_url = ""
-
         if file and file.filename != '':
             resultado = cloudinary.uploader.upload(
                 file,
@@ -276,14 +257,12 @@ def admin_servicos():
                            config=carregar_config())
 
 # ================= LOGOUT ==================
-
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect(url_for('index'))
 
 # ================= START ==================
-
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
