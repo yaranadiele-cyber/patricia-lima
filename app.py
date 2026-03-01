@@ -3,6 +3,7 @@ import os
 import psycopg
 from psycopg.rows import dict_row
 from werkzeug.security import generate_password_hash, check_password_hash
+import time
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev_key")
@@ -20,57 +21,63 @@ def get_db():
 
 # ================== INICIALIZA BANCO ==================
 def init_db():
-    with get_db() as conn:
-        with conn.cursor() as cur:
+    tentativas = 5
+    while tentativas > 0:
+        try:
+            with get_db() as conn:
+                with conn.cursor() as cur:
 
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS admin (
-                    id SERIAL PRIMARY KEY,
-                    usuario TEXT UNIQUE,
-                    senha TEXT
-                )
-            """)
+                    cur.execute("""
+                        CREATE TABLE IF NOT EXISTS admin (
+                            id SERIAL PRIMARY KEY,
+                            usuario TEXT UNIQUE,
+                            senha TEXT
+                        )
+                    """)
 
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS configuracoes (
-                    id SERIAL PRIMARY KEY,
-                    nome TEXT,
-                    profissao TEXT
-                )
-            """)
+                    cur.execute("""
+                        CREATE TABLE IF NOT EXISTS servicos (
+                            id SERIAL PRIMARY KEY,
+                            nome TEXT,
+                            preco TEXT,
+                            descricao TEXT,
+                            imagem TEXT
+                        )
+                    """)
 
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS servicos (
-                    id SERIAL PRIMARY KEY,
-                    nome TEXT,
-                    preco TEXT,
-                    descricao TEXT,
-                    imagem TEXT
-                )
-            """)
+                    cur.execute("""
+                        CREATE TABLE IF NOT EXISTS carrossel (
+                            id SERIAL PRIMARY KEY,
+                            imagem TEXT
+                        )
+                    """)
 
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS carrossel (
-                    id SERIAL PRIMARY KEY,
-                    imagem TEXT
-                )
-            """)
+                    cur.execute("""
+                        CREATE TABLE IF NOT EXISTS horarios (
+                            id SERIAL PRIMARY KEY,
+                            hora TEXT
+                        )
+                    """)
 
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS horarios (
-                    id SERIAL PRIMARY KEY,
-                    hora TEXT
-                )
-            """)
+                    # cria admin padrão se não existir
+                    cur.execute("SELECT * FROM admin LIMIT 1")
+                    if not cur.fetchone():
+                        senha_hash = generate_password_hash("1234")
+                        cur.execute(
+                            "INSERT INTO admin (usuario, senha) VALUES (%s, %s)",
+                            ("admin", senha_hash)
+                        )
 
-            # Admin padrão
-            cur.execute("SELECT * FROM admin LIMIT 1")
-            if not cur.fetchone():
-                senha_hash = generate_password_hash("1234")
-                cur.execute(
-                    "INSERT INTO admin (usuario, senha) VALUES (%s, %s)",
-                    ("admin", senha_hash)
-                )
+                    conn.commit()
+                    print("Banco inicializado com sucesso!")
+                    return
+
+        except Exception as e:
+            print("Erro ao conectar no banco, tentando novamente...")
+            tentativas -= 1
+            time.sleep(3)
+
+    print("Não foi possível conectar ao banco.")
 
 # ================== SITE ==================
 
@@ -100,14 +107,19 @@ def login():
         user = request.form.get("usuario")
         senha_digitada = request.form.get("senha")
 
-        with get_db() as conn:
-            with conn.cursor() as cur:
-                cur.execute("SELECT * FROM admin WHERE usuario=%s", (user,))
-                admin = cur.fetchone()
+        try:
+            with get_db() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT * FROM admin WHERE usuario=%s", (user,))
+                    admin = cur.fetchone()
 
-        if admin and check_password_hash(admin["senha"], senha_digitada):
-            session["admin"] = True
-            return redirect(url_for("painel"))
+            if admin and check_password_hash(admin["senha"], senha_digitada):
+                session["admin"] = True
+                return redirect(url_for("painel"))
+
+        except Exception as e:
+            print("Erro no login:", e)
+            return "Erro interno no servidor."
 
     return render_template("admin.html")
 
@@ -251,36 +263,9 @@ def excluir_horario(id):
 
     return redirect(url_for("admin_horarios"))
 
-# ================== SEGURANÇA ==================
-
-@app.route("/admin/seguranca", methods=["GET", "POST"])
-def admin_seguranca():
-    if not session.get("admin"):
-        return redirect(url_for("login"))
-
-    if request.method == "POST":
-        usuario = request.form.get("usuario")
-        senha = request.form.get("senha")
-
-        senha_hash = generate_password_hash(senha)
-
-        with get_db() as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    "UPDATE admin SET usuario=%s, senha=%s WHERE id=1",
-                    (usuario, senha_hash)
-                )
-                conn.commit()
-
-        session.clear()
-        return redirect(url_for("login"))
-
-    return render_template("admin_seguranca.html")
-
 # ================== START ==================
 
-if DATABASE_URL:
-    init_db()
+init_db()
 
 if __name__ == "__main__":
     app.run(debug=True)
