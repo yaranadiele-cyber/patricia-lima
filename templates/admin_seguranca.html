@@ -2,46 +2,26 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Segurança - Patricia Lima</title>
+    <title>Segurança</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Allura&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        .titulo-admin { font-family: 'Allura', cursive; font-size: 3rem; color: #6f4b44; text-align: center; }
-        .alerta { background: rgba(170, 68, 68, 0.1); color: #aa4444; padding: 15px; border-radius: 10px; font-size: 0.8rem; margin-bottom: 20px; border: 1px solid rgba(170, 68, 68, 0.2); }
+        body { font-family:'Poppins', sans-serif; background:#f5f5f5; }
+        .container { max-width:400px; margin:60px auto; padding:20px; background:rgba(255,255,255,0.2); border-radius:15px; backdrop-filter:blur(10px); }
+        h1 { text-align:center; font-family:'Allura', cursive; font-size:2.5rem; color:#6f4b44; margin-bottom:20px; }
+        input { width:100%; padding:10px; margin-bottom:15px; border-radius:5px; border:1px solid #ccc; }
+        button { width:100%; padding:10px; background:#aa4444; color:white; border:none; border-radius:5px; cursor:pointer; }
+        a { display:block; text-align:center; margin-top:15px; color:#6f4b44; text-decoration:none; }
     </style>
 </head>
 <body>
-<div class="container" style="max-width: 500px;">
-    <h1 class="titulo-admin">🔐 Segurança</h1>
-    
-    <div class="alerta">
-        <strong>Atenção:</strong> Ao alterar o usuário ou senha, você precisará fazer login novamente com as novas credenciais.
+    <div class="container">
+        <h1>Alterar Login</h1>
+        <form method="POST">
+            <input type="text" name="usuario" placeholder="Novo usuário" required>
+            <input type="password" name="senha" placeholder="Nova senha" required>
+            <button type="submit">Atualizar</button>
+        </form>
+        <a href="{{ url_for('painel') }}">⬅ Voltar</a>
     </div>
-
-    <form method="POST">
-        <label style="color:#6f4b44; font-weight:bold;">Novo Usuário:</label>
-        <input type="text" name="usuario" value="admin" required style="width:100%; padding:12px; border-radius:10px; border:1px solid #ddd; margin-bottom:15px;">
-
-        <label style="color:#6f4b44; font-weight:bold;">Nova Senha:</label>
-        <input type="password" name="senha" placeholder="Digite a nova senha" required style="width:100%; padding:12px; border-radius:10px; border:1px solid #ddd; margin-bottom:20px;">
-
-        <button type="submit" style="width:100%; padding:15px; background:#aa4444; color:white; border:none; border-radius:30px; font-weight:bold; cursor:pointer;">💾 Atualizar Acesso</button>
-    </form>
-
-    <a href="{{ url_for('painel') }}" class="btn-voltar" style="margin-top:20px;">⬅ Voltar ao Painel</a>
-</div>
-
- <footer class="rodape">
-    <div class="rodape-conteudo">
-        <p>&copy; <span id="ano-atual"></span> Patricia Lima — Todos os direitos reservados.</p>
-        <p class="assinatura">Desenvolvido por <a href="https://seulink.com" target="_blank">NY Design Web</a></p>
-    </div>
-</footer>
-
-<script>
-    // Coloca o ano atual automaticamente
-    document.getElementById('ano-atual').textContent = new Date().getFullYear();
-</script>
-
 </body>
 </html>

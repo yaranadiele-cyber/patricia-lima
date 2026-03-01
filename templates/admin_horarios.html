@@ -4,36 +4,38 @@
     <meta charset="UTF-8">
     <title>Horários</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body { font-family:'Poppins', sans-serif; background:#f5f5f5; }
+        .container { max-width:500px; margin:50px auto; padding:20px; background:rgba(255,255,255,0.2); border-radius:15px; backdrop-filter:blur(10px); }
+        h1 { text-align:center; font-family:'Allura', cursive; font-size:2.5rem; color:#6f4b44; margin-bottom:25px; }
+        form { display:flex; justify-content:center; gap:10px; margin-bottom:20px; }
+        input[type=text] { padding:10px; border-radius:5px; border:1px solid #ccc; flex:1; }
+        button { padding:10px 15px; background:#aa4444; color:white; border:none; border-radius:5px; cursor:pointer; }
+        .grid-horarios { display:grid; grid-template-columns: repeat(auto-fit, minmax(80px,1fr)); gap:15px; }
+        .card-horario { background:rgba(255,255,255,0.2); padding:15px; border-radius:10px; text-align:center; border:1px solid rgba(255,255,255,0.3); position:relative; }
+        .card-horario a { display:block; margin-top:8px; color:#aa4444; text-decoration:none; }
+        a.voltar { display:block; text-align:center; margin-top:20px; color:#6f4b44; text-decoration:none; }
+    </style>
 </head>
 <body>
     <div class="container">
-        <h1 style="font-family:'Allura'; color:#6f4b44; font-size:3rem; text-align:center;">⏰ Gerenciar Horários</h1>
-        <form method="POST" style="display:flex; gap:10px; margin-bottom:20px;">
-            <input type="time" name="novo_horario" required>
-            <button type="submit" style="background:green; color:white; border:none; padding:10px; border-radius:5px; cursor:pointer;">+ Adicionar</button>
+        <h1>Horários</h1>
+
+        <form method="POST">
+            <input type="text" name="novo_horario" placeholder="Novo horário" required>
+            <button type="submit">Adicionar</button>
         </form>
-        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
+
+        <div class="grid-horarios">
             {% for h in horarios %}
-            <div style="background:rgba(255,255,255,0.2); padding:10px; border-radius:10px; text-align:center;">
-                {{ h.hora }} <br>
-                <a href="{{ url_for('excluir_horario', id=h.id) }}" style="color:red; font-size:0.7rem;">[Remover]</a>
+            <div class="card-horario">
+                {{ h.hora }}
+                <a href="{{ url_for('excluir_horario', id=h.id) }}">Excluir</a>
             </div>
             {% endfor %}
         </div>
-        <a href="{{ url_for('painel') }}" class="btn-voltar" style="margin-top:20px;">⬅ Voltar</a>
+
+        <a href="{{ url_for('painel') }}" class="voltar">⬅ Voltar</a>
     </div>
-
-     <footer class="rodape">
-    <div class="rodape-conteudo">
-        <p>&copy; <span id="ano-atual"></span> Patricia Lima — Todos os direitos reservados.</p>
-        <p class="assinatura">Desenvolvido por <a href="https://seulink.com" target="_blank">NY Design Web</a></p>
-    </div>
-</footer>
-
-<script>
-    // Coloca o ano atual automaticamente
-    document.getElementById('ano-atual').textContent = new Date().getFullYear();
-</script>
-
 </body>
 </html>
