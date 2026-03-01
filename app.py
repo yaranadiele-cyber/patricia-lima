@@ -10,7 +10,6 @@ app.secret_key = os.environ.get("SECRET_KEY", "dev_key")
 # ================== BANCO ==================
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
-# Correção para Render
 if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
@@ -27,8 +26,7 @@ def init_db():
                 CREATE TABLE IF NOT EXISTS admin (
                     id SERIAL PRIMARY KEY,
                     usuario TEXT UNIQUE,
-                    senha TEXT,
-                    chave_recuperacao TEXT
+                    senha TEXT
                 )
             """)
 
@@ -37,6 +35,30 @@ def init_db():
                     id SERIAL PRIMARY KEY,
                     nome TEXT,
                     profissao TEXT
+                )
+            """)
+
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS servicos (
+                    id SERIAL PRIMARY KEY,
+                    nome TEXT,
+                    preco TEXT,
+                    descricao TEXT,
+                    imagem TEXT
+                )
+            """)
+
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS carrossel (
+                    id SERIAL PRIMARY KEY,
+                    imagem TEXT
+                )
+            """)
+
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS horarios (
+                    id SERIAL PRIMARY KEY,
+                    hora TEXT
                 )
             """)
 
@@ -53,9 +75,11 @@ def init_db():
             if not cur.fetchone():
                 senha_hash = generate_password_hash("1234")
                 cur.execute("""
-                    INSERT INTO admin (usuario, senha, chave_recuperacao)
-                    VALUES (%s, %s, %s)
-                """, ("admin", senha_hash, "patricia123"))
+                    INSERT INTO admin (usuario, senha)
+                    VALUES (%s, %s)
+                """, ("admin", senha_hash))
+
+# ================== AUX ==================
 
 def carregar_config():
     try:
@@ -66,11 +90,21 @@ def carregar_config():
     except:
         return {}
 
-# ================== ROTAS ==================
+# ================== ROTAS SITE ==================
 
 @app.route("/")
 def index():
     return render_template("index.html", config=carregar_config())
+
+@app.route("/quemsou")
+def quemsou():
+    return render_template("quemsou.html", config=carregar_config())
+
+@app.route("/atendimento")
+def atendimento():
+    return render_template("atendimento.html", config=carregar_config())
+
+# ================== LOGIN ==================
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -87,28 +121,55 @@ def login():
             session["admin"] = True
             return redirect(url_for("painel"))
 
-    return render_template("admin.html", config=carregar_config())
-
-@app.route("/painel")
-def painel():
-    if not session.get("admin"):
-        return redirect(url_for("login"))
-    return render_template("painel.html", config=carregar_config())
-
-@app.route("/quemsou")
-def quemsou():
-    return render_template("quemsou.html", config=carregar_config())
-
-@app.route("/atendimento")
-def atendimento():
-    return render_template("atendimento.html", config=carregar_config())
+    return render_template("admin.html")
 
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect(url_for("index"))
 
+# ================== PAINEL ==================
+
+@app.route("/painel")
+def painel():
+    if not session.get("admin"):
+        return redirect(url_for("login"))
+    return render_template("painel.html")
+
+# ================== ROTAS ADMIN ==================
+
+@app.route("/admin/aparencia")
+def admin_aparencia():
+    if not session.get("admin"):
+        return redirect(url_for("login"))
+    return render_template("admin_aparencia.html", config=carregar_config())
+
+@app.route("/admin/carrossel")
+def admin_carrossel():
+    if not session.get("admin"):
+        return redirect(url_for("login"))
+    return render_template("admin_carrossel.html")
+
+@app.route("/admin/servicos")
+def admin_servicos():
+    if not session.get("admin"):
+        return redirect(url_for("login"))
+    return render_template("admin_servicos.html")
+
+@app.route("/admin/horarios")
+def admin_horarios():
+    if not session.get("admin"):
+        return redirect(url_for("login"))
+    return render_template("admin_horarios.html")
+
+@app.route("/admin/seguranca")
+def admin_seguranca():
+    if not session.get("admin"):
+        return redirect(url_for("login"))
+    return render_template("admin_seguranca.html")
+
 # ================== START ==================
+
 if DATABASE_URL:
     init_db()
 
