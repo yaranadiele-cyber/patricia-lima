@@ -98,6 +98,7 @@ def init_db():
     except Exception as e:
         print("⚠️ Falha ao inicializar banco:", e)
 
+
 # ================== CONFIGURAÇÃO ==================
 def carregar_config():
     try:
@@ -252,7 +253,7 @@ def logout():
     session.clear()
     return redirect(url_for('index'))
 
+init_db()
 # ================== START ==================
 if __name__ == "__main__":
-    init_db()
     app.run()
