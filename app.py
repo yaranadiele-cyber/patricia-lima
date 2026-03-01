@@ -152,6 +152,10 @@ def login():
 
     return render_template("admin.html", config=carregar_config())
 
+@app.route("/quemsou")
+def quemsou():
+    return render_template("quemsou.html", config=carregar_config())
+
 @app.route("/painel")
 def painel():
     if not session.get("admin"):
