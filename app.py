@@ -25,97 +25,105 @@ def get_db():
     return psycopg.connect(DATABASE_URL, row_factory=dict_row, sslmode="require")
 
 def init_db():
-    conn = get_db()
-    cur = conn.cursor()
+    """Inicializa o banco de dados com tabelas e registros padrão."""
+    try:
+        conn = get_db()
+        cur = conn.cursor()
 
-    # ================= TABELAS =================
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS servicos (
-            id SERIAL PRIMARY KEY,
-            nome TEXT,
-            preco TEXT,
-            descricao TEXT,
-            imagem TEXT
-        )
-    """)
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS carrossel (
-            id SERIAL PRIMARY KEY,
-            imagem TEXT
-        )
-    """)
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS admin (
-            id SERIAL PRIMARY KEY,
-            usuario TEXT UNIQUE,
-            senha TEXT,
-            chave_recuperacao TEXT
-        )
-    """)
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS horarios (
-            id SERIAL PRIMARY KEY,
-            hora TEXT
-        )
-    """)
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS configuracoes (
-            id SERIAL PRIMARY KEY,
-            texto_quem_sou TEXT,
-            nome TEXT,
-            profissao TEXT,
-            logo TEXT,
-            whatsapp TEXT,
-            instagram TEXT,
-            localizacao TEXT,
-            cor_texto_principal TEXT DEFAULT '#ffffff',
-            cor_botoes TEXT DEFAULT '#f2ae94',
-            fonte_site TEXT DEFAULT 'Poppins'
-        )
-    """)
-
-    # ================= INSERÇÕES PADRÃO =================
-    cur.execute("SELECT * FROM configuracoes LIMIT 1")
-    if not cur.fetchone():
+        # ======== TABELAS ========
         cur.execute("""
-            INSERT INTO configuracoes (nome, profissao)
-            VALUES ('Patricia Lima', 'Profissional da Beleza')
+            CREATE TABLE IF NOT EXISTS servicos (
+                id SERIAL PRIMARY KEY,
+                nome TEXT,
+                preco TEXT,
+                descricao TEXT,
+                imagem TEXT
+            )
+        """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS carrossel (
+                id SERIAL PRIMARY KEY,
+                imagem TEXT
+            )
+        """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS admin (
+                id SERIAL PRIMARY KEY,
+                usuario TEXT UNIQUE,
+                senha TEXT,
+                chave_recuperacao TEXT
+            )
+        """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS horarios (
+                id SERIAL PRIMARY KEY,
+                hora TEXT
+            )
+        """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS configuracoes (
+                id SERIAL PRIMARY KEY,
+                texto_quem_sou TEXT,
+                nome TEXT,
+                profissao TEXT,
+                logo TEXT,
+                whatsapp TEXT,
+                instagram TEXT,
+                localizacao TEXT,
+                cor_texto_principal TEXT DEFAULT '#ffffff',
+                cor_botoes TEXT DEFAULT '#f2ae94',
+                fonte_site TEXT DEFAULT 'Poppins'
+            )
         """)
 
-    cur.execute("SELECT * FROM admin LIMIT 1")
-    if not cur.fetchone():
-        senha_hash = generate_password_hash("1234")
-        cur.execute("""
-            INSERT INTO admin (usuario, senha, chave_recuperacao)
-            VALUES (%s, %s, %s)
-        """, ("admin", senha_hash, "patricia123"))
+        # ======== REGISTROS PADRÃO ========
+        cur.execute("SELECT * FROM configuracoes LIMIT 1")
+        if not cur.fetchone():
+            cur.execute("""
+                INSERT INTO configuracoes (nome, profissao)
+                VALUES ('Patricia Lima', 'Profissional da Beleza')
+            """)
+        cur.execute("SELECT * FROM admin LIMIT 1")
+        if not cur.fetchone():
+            senha_hash = generate_password_hash("1234")
+            cur.execute("""
+                INSERT INTO admin (usuario, senha, chave_recuperacao)
+                VALUES (%s, %s, %s)
+            """, ("admin", senha_hash, "patricia123"))
 
-    conn.commit()
-    cur.close()
-    conn.close()
+        conn.commit()
+        cur.close()
+        conn.close()
+        print("✅ Banco inicializado com sucesso.")
+    except Exception as e:
+        print("⚠️ Falha ao inicializar banco:", e)
 
-with app.app_context():
-    init_db()
-
-# ================= FUNÇÃO CONFIG ==================
+# ================== CONFIGURAÇÃO ==================
 def carregar_config():
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM configuracoes LIMIT 1")
-    cfg = cur.fetchone()
-    cur.close()
-    conn.close()
-    return cfg
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM configuracoes LIMIT 1")
+        cfg = cur.fetchone()
+        cur.close()
+        conn.close()
+        return cfg
+    except Exception as e:
+        print("⚠️ Não foi possível carregar configurações:", e)
+        return {}
 
-# ================= ROTAS PÚBLICAS ==================
+# ================== ROTAS PÚBLICAS ==================
 @app.route("/")
 def index():
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM carrossel")
-    imagens = cur.fetchall()
-    cur.close()
-    conn.close()
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM carrossel")
+        imagens = cur.fetchall()
+        cur.close()
+        conn.close()
+    except Exception:
+        imagens = []
     return render_template("index.html", imagens=imagens, config=carregar_config())
 
 @app.route("/quemsou")
@@ -124,37 +132,38 @@ def quemsou():
 
 @app.route("/atendimento")
 def atendimento():
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM servicos")
-    servicos = cur.fetchall()
-    cur.execute("SELECT * FROM horarios ORDER BY hora ASC")
-    horarios = cur.fetchall()
-    cur.close()
-    conn.close()
-    return render_template("atendimento.html",
-                           servicos=servicos,
-                           horarios=horarios,
-                           config=carregar_config())
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM servicos")
+        servicos = cur.fetchall()
+        cur.execute("SELECT * FROM horarios ORDER BY hora ASC")
+        horarios = cur.fetchall()
+        cur.close()
+        conn.close()
+    except Exception:
+        servicos = []
+        horarios = []
+    return render_template("atendimento.html", servicos=servicos, horarios=horarios, config=carregar_config())
 
-# ================= LOGIN ==================
+# ================== LOGIN ==================
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
         user = request.form.get('usuario')
         senha_digitada = request.form.get('senha')
-
-        conn = get_db()
-        cur = conn.cursor()
-        cur.execute("SELECT * FROM admin WHERE usuario=%s", (user,))
-        admin = cur.fetchone()
-        cur.close()
-        conn.close()
-
+        try:
+            conn = get_db()
+            cur = conn.cursor()
+            cur.execute("SELECT * FROM admin WHERE usuario=%s", (user,))
+            admin = cur.fetchone()
+            cur.close()
+            conn.close()
+        except Exception:
+            admin = None
         if admin and check_password_hash(admin["senha"], senha_digitada):
             session['admin'] = True
             return redirect(url_for('painel'))
-
     return render_template("admin.html", config=carregar_config())
 
 @app.route("/painel")
@@ -163,106 +172,87 @@ def painel():
         return redirect(url_for('login'))
     return render_template("painel.html", config=carregar_config())
 
-# ================= APARÊNCIA ==================
+# ================== APARÊNCIA ==================
 @app.route("/admin/aparencia", methods=["GET", "POST"])
 def admin_aparencia():
     if not session.get('admin'):
         return redirect(url_for('login'))
-
-    conn = get_db()
-    cur = conn.cursor()
-
-    if request.method == "POST":
-        file = request.files.get('foto_perfil')
-        if file and file.filename != '':
-            resultado = cloudinary.uploader.upload(
-                file,
-                folder="site_patricia/perfil"
-            )
-            imagem_url = resultado["secure_url"]
-            cur.execute("UPDATE configuracoes SET logo=%s WHERE id=1", (imagem_url,))
-
-        cur.execute("""
-            UPDATE configuracoes SET 
-            nome=%s,
-            profissao=%s,
-            texto_quem_sou=%s,
-            whatsapp=%s,
-            instagram=%s,
-            localizacao=%s,
-            cor_texto_principal=%s,
-            cor_botoes=%s,
-            fonte_site=%s
-            WHERE id=1
-        """, (
-            request.form.get('nome'),
-            request.form.get('profissao'),
-            request.form.get('texto'),
-            request.form.get('whatsapp'),
-            request.form.get('instagram'),
-            request.form.get('localizacao'),
-            request.form.get('cor_txt'),
-            request.form.get('cor_btn'),
-            request.form.get('fonte')
-        ))
-
-        conn.commit()
-        cur.close()
-        conn.close()
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        if request.method == "POST":
+            file = request.files.get('foto_perfil')
+            if file and file.filename != '':
+                resultado = cloudinary.uploader.upload(file, folder="site_patricia/perfil")
+                imagem_url = resultado["secure_url"]
+                cur.execute("UPDATE configuracoes SET logo=%s WHERE id=1", (imagem_url,))
+            cur.execute("""
+                UPDATE configuracoes SET 
+                nome=%s,
+                profissao=%s,
+                texto_quem_sou=%s,
+                whatsapp=%s,
+                instagram=%s,
+                localizacao=%s,
+                cor_texto_principal=%s,
+                cor_botoes=%s,
+                fonte_site=%s
+                WHERE id=1
+            """, (
+                request.form.get('nome'),
+                request.form.get('profissao'),
+                request.form.get('texto'),
+                request.form.get('whatsapp'),
+                request.form.get('instagram'),
+                request.form.get('localizacao'),
+                request.form.get('cor_txt'),
+                request.form.get('cor_btn'),
+                request.form.get('fonte')
+            ))
+            conn.commit()
+            return redirect(url_for('painel'))
+        return render_template("admin_aparencia.html", config=carregar_config())
+    except Exception as e:
+        print("⚠️ Erro na rota de aparência:", e)
         return redirect(url_for('painel'))
 
-    cur.close()
-    conn.close()
-    return render_template("admin_aparencia.html", config=carregar_config())
-
-# ================= SERVIÇOS ==================
+# ================== SERVIÇOS ==================
 @app.route("/admin/servicos", methods=["GET", "POST"])
 def admin_servicos():
     if not session.get('admin'):
         return redirect(url_for('login'))
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        if request.method == "POST":
+            nome = request.form.get('nome')
+            preco = request.form.get('preco')
+            descricao = request.form.get('descricao')
+            file = request.files.get('imagem')
+            imagem_url = ""
+            if file and file.filename != '':
+                resultado = cloudinary.uploader.upload(file, folder="site_patricia/servicos")
+                imagem_url = resultado["secure_url"]
+            cur.execute("""
+                INSERT INTO servicos (nome, preco, descricao, imagem)
+                VALUES (%s, %s, %s, %s)
+            """, (nome, preco, descricao, imagem_url))
+            conn.commit()
+            return redirect(url_for('admin_servicos'))
+        cur.execute("SELECT * FROM servicos")
+        servicos = cur.fetchall()
+        return render_template("admin_servicos.html", servicos=servicos, config=carregar_config())
+    except Exception as e:
+        print("⚠️ Erro na rota de serviços:", e)
+        return redirect(url_for('painel'))
 
-    conn = get_db()
-    cur = conn.cursor()
-
-    if request.method == "POST":
-        nome = request.form.get('nome')
-        preco = request.form.get('preco')
-        descricao = request.form.get('descricao')
-        file = request.files.get('imagem')
-
-        imagem_url = ""
-        if file and file.filename != '':
-            resultado = cloudinary.uploader.upload(
-                file,
-                folder="site_patricia/servicos"
-            )
-            imagem_url = resultado["secure_url"]
-
-        cur.execute("""
-            INSERT INTO servicos (nome, preco, descricao, imagem)
-            VALUES (%s, %s, %s, %s)
-        """, (nome, preco, descricao, imagem_url))
-
-        conn.commit()
-        cur.close()
-        conn.close()
-        return redirect(url_for('admin_servicos'))
-
-    cur.execute("SELECT * FROM servicos")
-    servicos = cur.fetchall()
-    cur.close()
-    conn.close()
-    return render_template("admin_servicos.html",
-                           servicos=servicos,
-                           config=carregar_config())
-
-# ================= LOGOUT ==================
+# ================== LOGOUT ==================
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect(url_for('index'))
 
-# ================= START ==================
+# ================== START ==================
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    init_db()
+    app.run()
