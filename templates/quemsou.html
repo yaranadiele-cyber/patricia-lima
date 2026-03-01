@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Quem Sou - {{ config['nome'] }}</title>
+<title>Quem Sou - {{ config.get('nome', '') }}</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
@@ -14,34 +14,37 @@
 
 <div class="vidro-container">
 
-{% if config['logo'] %}
-<img src="{{ config['logo'] }}" class="foto-perfil">
+{% if config.get('logo') %}
+<img src="{{ config.get('logo') }}" class="foto-perfil">
 {% else %}
 <div class="foto-perfil" style="background:#eee;display:flex;align-items:center;justify-content:center;">
 Sem Foto
 </div>
 {% endif %}
 
-<h1 class="nome-perfil">{{ config['nome'] }}</h1>
-<span class="profissao-perfil">{{ config['profissao'] }}</span>
+<h1 class="nome-perfil">{{ config.get('nome', '') }}</h1>
+<span class="profissao-perfil">{{ config.get('profissao', '') }}</span>
 
 <div class="texto-bio">
-{{ config['texto_quem_sou']|safe|replace('\n','<br>') }}
+{{ config.get('texto_quem_sou', '')|safe|replace('\n','<br>') }}
 </div>
 
 <div class="botoes-redes">
-{% if config['instagram'] %}
-<a href="https://instagram.com/{{ config['instagram']|replace('@','') }}" class="btn-insta" target="_blank">Instagram</a>
+{% if config.get('instagram') %}
+<a href="https://instagram.com/{{ config.get('instagram').replace('@','') }}" class="btn-insta" target="_blank">Instagram</a>
 {% endif %}
 
-{% if config['whatsapp'] %}
-<a href="https://wa.me/{{ config['whatsapp'] }}" class="btn-whats" target="_blank">WhatsApp</a>
+{% if config.get('whatsapp') %}
+<a href="https://wa.me/{{ config.get('whatsapp') }}" class="btn-whats" target="_blank">WhatsApp</a>
 {% endif %}
 </div>
 
 </div>
 
-<a href="{{ url_for('index') }}" class="btn-voltar-vidro">← Voltar</a>
+<a href="{{ url_for('index') }}" 
+           style="display: block; text-align: center; text-decoration: none; background: rgba(255, 255, 255, 0.1); color: white; padding: 12px; border-radius: 8px; font-weight: bold; border: 1px solid rgba(255, 255, 255, 0.2); backdrop-filter: blur(5px); transition: 0.3s;">
+           ⬅ Voltar ao Site
+        </a>
 
 </div>
 
