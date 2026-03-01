@@ -27,6 +27,7 @@ def init_db():
             with get_db() as conn:
                 with conn.cursor() as cur:
 
+                    # Tabela admin
                     cur.execute("""
                         CREATE TABLE IF NOT EXISTS admin (
                             id SERIAL PRIMARY KEY,
@@ -35,6 +36,7 @@ def init_db():
                         )
                     """)
 
+                    # Tabela serviços
                     cur.execute("""
                         CREATE TABLE IF NOT EXISTS servicos (
                             id SERIAL PRIMARY KEY,
@@ -45,6 +47,7 @@ def init_db():
                         )
                     """)
 
+                    # Tabela carrossel
                     cur.execute("""
                         CREATE TABLE IF NOT EXISTS carrossel (
                             id SERIAL PRIMARY KEY,
@@ -52,6 +55,7 @@ def init_db():
                         )
                     """)
 
+                    # Tabela horários
                     cur.execute("""
                         CREATE TABLE IF NOT EXISTS horarios (
                             id SERIAL PRIMARY KEY,
@@ -59,7 +63,7 @@ def init_db():
                         )
                     """)
 
-                    # cria admin padrão se não existir
+                    # Admin padrão
                     cur.execute("SELECT * FROM admin LIMIT 1")
                     if not cur.fetchone():
                         senha_hash = generate_password_hash("1234")
@@ -73,14 +77,13 @@ def init_db():
                     return
 
         except Exception as e:
-            print("Erro ao conectar no banco, tentando novamente...")
+            print("Erro ao conectar no banco, tentando novamente...", e)
             tentativas -= 1
             time.sleep(3)
 
     print("Não foi possível conectar ao banco.")
 
 # ================== SITE ==================
-
 @app.route("/")
 def index():
     with get_db() as conn:
@@ -100,7 +103,6 @@ def atendimento():
     return render_template("atendimento.html")
 
 # ================== LOGIN ==================
-
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -129,7 +131,6 @@ def logout():
     return redirect(url_for("index"))
 
 # ================== PAINEL ==================
-
 @app.route("/painel")
 def painel():
     if not session.get("admin"):
@@ -137,7 +138,6 @@ def painel():
     return render_template("painel.html")
 
 # ================== CARROSSEL ==================
-
 @app.route("/admin/carrossel", methods=["GET", "POST"])
 def admin_carrossel():
     if not session.get("admin"):
@@ -147,20 +147,16 @@ def admin_carrossel():
 
     with get_db() as conn:
         with conn.cursor() as cur:
-
             if request.method == "POST":
                 imagem = request.files.get("imagem_carrossel")
-
                 if imagem and imagem.filename != "":
                     caminho = f"static/uploads/{imagem.filename}"
                     imagem.save(caminho)
-
                     cur.execute(
                         "INSERT INTO carrossel (imagem) VALUES (%s)",
                         ("/" + caminho,)
                     )
                     conn.commit()
-
                 return redirect(url_for("admin_carrossel"))
 
             cur.execute("SELECT * FROM carrossel ORDER BY id DESC")
@@ -181,7 +177,6 @@ def excluir_carrossel(id):
     return redirect(url_for("admin_carrossel"))
 
 # ================== SERVIÇOS ==================
-
 @app.route("/admin/servicos", methods=["GET", "POST"])
 def admin_servicos():
     if not session.get("admin"):
@@ -191,7 +186,6 @@ def admin_servicos():
 
     with get_db() as conn:
         with conn.cursor() as cur:
-
             if request.method == "POST":
                 nome = request.form.get("nome")
                 preco = request.form.get("preco")
@@ -199,7 +193,6 @@ def admin_servicos():
                 imagem = request.files.get("imagem")
 
                 caminho_img = None
-
                 if imagem and imagem.filename != "":
                     caminho = f"static/uploads/{imagem.filename}"
                     imagem.save(caminho)
@@ -210,7 +203,6 @@ def admin_servicos():
                     VALUES (%s, %s, %s, %s)
                 """, (nome, preco, descricao, caminho_img))
                 conn.commit()
-
                 return redirect(url_for("admin_servicos"))
 
             cur.execute("SELECT * FROM servicos ORDER BY id DESC")
@@ -231,7 +223,6 @@ def excluir_servico(id):
     return redirect(url_for("admin_servicos"))
 
 # ================== HORÁRIOS ==================
-
 @app.route("/admin/horarios", methods=["GET", "POST"])
 def admin_horarios():
     if not session.get("admin"):
@@ -239,7 +230,6 @@ def admin_horarios():
 
     with get_db() as conn:
         with conn.cursor() as cur:
-
             if request.method == "POST":
                 novo = request.form.get("novo_horario")
                 cur.execute("INSERT INTO horarios (hora) VALUES (%s)", (novo,))
@@ -263,8 +253,31 @@ def excluir_horario(id):
 
     return redirect(url_for("admin_horarios"))
 
-# ================== START ==================
+# ================== SEGURANÇA ==================
+@app.route("/admin/seguranca", methods=["GET", "POST"])
+def admin_seguranca():
+    if not session.get("admin"):
+        return redirect(url_for("login"))
 
+    if request.method == "POST":
+        usuario = request.form.get("usuario")
+        senha = request.form.get("senha")
+        senha_hash = generate_password_hash(senha)
+
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "UPDATE admin SET usuario=%s, senha=%s WHERE id=1",
+                    (usuario, senha_hash)
+                )
+                conn.commit()
+
+        session.clear()
+        return redirect(url_for("login"))
+
+    return render_template("admin_seguranca.html")
+
+# ================== START ==================
 init_db()
 
 if __name__ == "__main__":
