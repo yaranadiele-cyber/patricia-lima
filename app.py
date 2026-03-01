@@ -83,13 +83,14 @@ def init_db():
                 INSERT INTO configuracoes (nome, profissao)
                 VALUES ('Patricia Lima', 'Profissional da Beleza')
             """)
-        cur.execute("SELECT * FROM admin LIMIT 1")
-        if not cur.fetchone():
-            senha_hash = generate_password_hash("1234")
-            cur.execute("""
-                INSERT INTO admin (usuario, senha, chave_recuperacao)
-                VALUES (%s, %s, %s)
-            """, ("admin", senha_hash, "patricia123"))
+       cur.execute("DELETE FROM admin")
+
+senha_hash = generate_password_hash("1234")
+
+cur.execute("""
+    INSERT INTO admin (usuario, senha, chave_recuperacao)
+    VALUES (%s, %s, %s)
+""", ("admin", senha_hash, "patricia123"))
 
         conn.commit()
         cur.close()
