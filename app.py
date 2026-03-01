@@ -1,7 +1,6 @@
 from flask import Flask, render_template, request, redirect, session, url_for
 import os
 import cloudinary
-import cloudinary.uploader
 import psycopg
 from psycopg.rows import dict_row
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -19,7 +18,13 @@ cloudinary.config(
 # ================== BANCO ==================
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
+# 🔥 CORREÇÃO IMPORTANTE PARA RENDER
+if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
 def get_db():
+    if not DATABASE_URL:
+        raise Exception("DATABASE_URL não configurada.")
     return psycopg.connect(DATABASE_URL, row_factory=dict_row)
 
 def init_db():
@@ -97,7 +102,7 @@ def init_db():
         print("✅ Banco inicializado com sucesso.")
 
     except Exception as e:
-        print("⚠️ Erro ao inicializar banco:", e)
+        print("❌ Erro ao inicializar banco:", e)
 
 # ================== CONFIGURAÇÃO ==================
 def carregar_config():
@@ -106,7 +111,8 @@ def carregar_config():
             with conn.cursor() as cur:
                 cur.execute("SELECT * FROM configuracoes LIMIT 1")
                 return cur.fetchone()
-    except:
+    except Exception as e:
+        print("Erro ao carregar config:", e)
         return {}
 
 # ================== ROTAS ==================
@@ -117,34 +123,31 @@ def index():
             with conn.cursor() as cur:
                 cur.execute("SELECT * FROM carrossel")
                 imagens = cur.fetchall()
-    except:
+    except Exception as e:
+        print("Erro index:", e)
         imagens = []
     return render_template("index.html", imagens=imagens, config=carregar_config())
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        user = request.form.get("usuario")
-        senha_digitada = request.form.get("senha")
+        try:
+            user = request.form.get("usuario")
+            senha_digitada = request.form.get("senha")
 
-        with get_db() as conn:
-            with conn.cursor() as cur:
-                cur.execute("SELECT * FROM admin WHERE usuario=%s", (user,))
-                admin = cur.fetchone()
+            with get_db() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT * FROM admin WHERE usuario=%s", (user,))
+                    admin = cur.fetchone()
 
-        if admin and check_password_hash(admin["senha"], senha_digitada):
-            session["admin"] = True
-            return redirect(url_for("painel"))
+            if admin and check_password_hash(admin["senha"], senha_digitada):
+                session["admin"] = True
+                return redirect(url_for("painel"))
+
+        except Exception as e:
+            print("Erro no login:", e)
 
     return render_template("admin.html", config=carregar_config())
-
-@app.route("/quemsou")
-def quemsou():
-    return render_template("quemsou.html", config=carregar_config())
-
-@app.route("/atendimento")
-def atendimento():
-    return render_template("atendimento.html", config=carregar_config())
 
 @app.route("/painel")
 def painel():
