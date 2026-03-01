@@ -18,87 +18,81 @@ cloudinary.config(
 
 # ================== BANCO ==================
 DATABASE_URL = os.environ.get("DATABASE_URL")
-if not DATABASE_URL:
-    raise ValueError("DATABASE_URL não encontrada nas variáveis de ambiente.")
 
 def get_db():
-    return psycopg.connect(DATABASE_URL, row_factory=dict_row, sslmode="require")
+    return psycopg.connect(DATABASE_URL, row_factory=dict_row)
 
 def init_db():
     try:
-        conn = get_db()
-        cur = conn.cursor()
+        with get_db() as conn:
+            with conn.cursor() as cur:
 
-        # ======== TABELAS ========
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS servicos (
-                id SERIAL PRIMARY KEY,
-                nome TEXT,
-                preco TEXT,
-                descricao TEXT,
-                imagem TEXT
-            )
-        """)
+                # ======== TABELAS ========
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS servicos (
+                        id SERIAL PRIMARY KEY,
+                        nome TEXT,
+                        preco TEXT,
+                        descricao TEXT,
+                        imagem TEXT
+                    )
+                """)
 
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS carrossel (
-                id SERIAL PRIMARY KEY,
-                imagem TEXT
-            )
-        """)
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS carrossel (
+                        id SERIAL PRIMARY KEY,
+                        imagem TEXT
+                    )
+                """)
 
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS admin (
-                id SERIAL PRIMARY KEY,
-                usuario TEXT UNIQUE,
-                senha TEXT,
-                chave_recuperacao TEXT
-            )
-        """)
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS admin (
+                        id SERIAL PRIMARY KEY,
+                        usuario TEXT UNIQUE,
+                        senha TEXT,
+                        chave_recuperacao TEXT
+                    )
+                """)
 
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS horarios (
-                id SERIAL PRIMARY KEY,
-                hora TEXT
-            )
-        """)
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS horarios (
+                        id SERIAL PRIMARY KEY,
+                        hora TEXT
+                    )
+                """)
 
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS configuracoes (
-                id SERIAL PRIMARY KEY,
-                texto_quem_sou TEXT,
-                nome TEXT,
-                profissao TEXT,
-                logo TEXT,
-                whatsapp TEXT,
-                instagram TEXT,
-                localizacao TEXT,
-                cor_texto_principal TEXT DEFAULT '#ffffff',
-                cor_botoes TEXT DEFAULT '#f2ae94',
-                fonte_site TEXT DEFAULT 'Poppins'
-            )
-        """)
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS configuracoes (
+                        id SERIAL PRIMARY KEY,
+                        texto_quem_sou TEXT,
+                        nome TEXT,
+                        profissao TEXT,
+                        logo TEXT,
+                        whatsapp TEXT,
+                        instagram TEXT,
+                        localizacao TEXT,
+                        cor_texto_principal TEXT DEFAULT '#ffffff',
+                        cor_botoes TEXT DEFAULT '#f2ae94',
+                        fonte_site TEXT DEFAULT 'Poppins'
+                    )
+                """)
 
-        # ======== CONFIGURAÇÃO PADRÃO ========
-        cur.execute("SELECT * FROM configuracoes LIMIT 1")
-        if not cur.fetchone():
-            cur.execute("""
-                INSERT INTO configuracoes (nome, profissao)
-                VALUES ('Patricia Lima', 'Profissional da Beleza')
-            """)
+                # ======== CONFIG PADRÃO ========
+                cur.execute("SELECT * FROM configuracoes LIMIT 1")
+                if not cur.fetchone():
+                    cur.execute("""
+                        INSERT INTO configuracoes (nome, profissao)
+                        VALUES (%s, %s)
+                    """, ("Patricia Lima", "Profissional da Beleza"))
 
-        # ======== CRIAR ADMIN APENAS SE NÃO EXISTIR ========
-        cur.execute("SELECT * FROM admin LIMIT 1")
-        if not cur.fetchone():
-            senha_hash = generate_password_hash("1234")
-            cur.execute("""
-                INSERT INTO admin (usuario, senha, chave_recuperacao)
-                VALUES (%s, %s, %s)
-        """, ("admin", senha_hash, "patricia123"))
-
-        conn.commit()
-        cur.close()
-        conn.close()
+                # ======== ADMIN PADRÃO ========
+                cur.execute("SELECT * FROM admin LIMIT 1")
+                if not cur.fetchone():
+                    senha_hash = generate_password_hash("1234")
+                    cur.execute("""
+                        INSERT INTO admin (usuario, senha, chave_recuperacao)
+                        VALUES (%s, %s, %s)
+                    """, ("admin", senha_hash, "patricia123"))
 
         print("✅ Banco inicializado com sucesso.")
 
@@ -108,13 +102,10 @@ def init_db():
 # ================== CONFIGURAÇÃO ==================
 def carregar_config():
     try:
-        conn = get_db()
-        cur = conn.cursor()
-        cur.execute("SELECT * FROM configuracoes LIMIT 1")
-        cfg = cur.fetchone()
-        cur.close()
-        conn.close()
-        return cfg
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT * FROM configuracoes LIMIT 1")
+                return cur.fetchone()
     except:
         return {}
 
@@ -122,12 +113,10 @@ def carregar_config():
 @app.route("/")
 def index():
     try:
-        conn = get_db()
-        cur = conn.cursor()
-        cur.execute("SELECT * FROM carrossel")
-        imagens = cur.fetchall()
-        cur.close()
-        conn.close()
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT * FROM carrossel")
+                imagens = cur.fetchall()
     except:
         imagens = []
     return render_template("index.html", imagens=imagens, config=carregar_config())
@@ -138,12 +127,10 @@ def login():
         user = request.form.get("usuario")
         senha_digitada = request.form.get("senha")
 
-        conn = get_db()
-        cur = conn.cursor()
-        cur.execute("SELECT * FROM admin WHERE usuario=%s", (user,))
-        admin = cur.fetchone()
-        cur.close()
-        conn.close()
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT * FROM admin WHERE usuario=%s", (user,))
+                admin = cur.fetchone()
 
         if admin and check_password_hash(admin["senha"], senha_digitada):
             session["admin"] = True
@@ -154,6 +141,10 @@ def login():
 @app.route("/quemsou")
 def quemsou():
     return render_template("quemsou.html", config=carregar_config())
+
+@app.route("/atendimento")
+def atendimento():
+    return render_template("atendimento.html", config=carregar_config())
 
 @app.route("/painel")
 def painel():
@@ -167,7 +158,10 @@ def logout():
     return redirect(url_for("index"))
 
 # ================== INICIALIZAÇÃO ==================
-init_db()
+if DATABASE_URL:
+    init_db()
+else:
+    print("⚠️ DATABASE_URL não configurada.")
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
