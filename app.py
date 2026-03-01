@@ -18,6 +18,7 @@ def get_db():
         raise Exception("DATABASE_URL não configurada.")
     return psycopg.connect(DATABASE_URL, row_factory=dict_row)
 
+# ================== INICIALIZA BANCO ==================
 def init_db():
     with get_db() as conn:
         with conn.cursor() as cur:
@@ -62,47 +63,34 @@ def init_db():
                 )
             """)
 
-            # Config padrão
-            cur.execute("SELECT * FROM configuracoes LIMIT 1")
-            if not cur.fetchone():
-                cur.execute("""
-                    INSERT INTO configuracoes (nome, profissao)
-                    VALUES (%s, %s)
-                """, ("Patricia Lima", "Profissional da Beleza"))
-
             # Admin padrão
             cur.execute("SELECT * FROM admin LIMIT 1")
             if not cur.fetchone():
                 senha_hash = generate_password_hash("1234")
-                cur.execute("""
-                    INSERT INTO admin (usuario, senha)
-                    VALUES (%s, %s)
-                """, ("admin", senha_hash))
+                cur.execute(
+                    "INSERT INTO admin (usuario, senha) VALUES (%s, %s)",
+                    ("admin", senha_hash)
+                )
 
-# ================== AUX ==================
-
-def carregar_config():
-    try:
-        with get_db() as conn:
-            with conn.cursor() as cur:
-                cur.execute("SELECT * FROM configuracoes LIMIT 1")
-                return cur.fetchone()
-    except:
-        return {}
-
-# ================== ROTAS SITE ==================
+# ================== SITE ==================
 
 @app.route("/")
 def index():
-    return render_template("index.html", config=carregar_config())
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM carrossel ORDER BY id DESC")
+            imagens = cur.fetchall()
+            cur.execute("SELECT * FROM servicos ORDER BY id DESC")
+            servicos = cur.fetchall()
+    return render_template("index.html", imagens=imagens, servicos=servicos)
 
 @app.route("/quemsou")
 def quemsou():
-    return render_template("quemsou.html", config=carregar_config())
+    return render_template("quemsou.html")
 
 @app.route("/atendimento")
 def atendimento():
-    return render_template("atendimento.html", config=carregar_config())
+    return render_template("atendimento.html")
 
 # ================== LOGIN ==================
 
@@ -136,36 +124,157 @@ def painel():
         return redirect(url_for("login"))
     return render_template("painel.html")
 
-# ================== ROTAS ADMIN ==================
+# ================== CARROSSEL ==================
 
-@app.route("/admin/aparencia")
-def admin_aparencia():
-    if not session.get("admin"):
-        return redirect(url_for("login"))
-    return render_template("admin_aparencia.html", config=carregar_config())
-
-@app.route("/admin/carrossel")
+@app.route("/admin/carrossel", methods=["GET", "POST"])
 def admin_carrossel():
     if not session.get("admin"):
         return redirect(url_for("login"))
-    return render_template("admin_carrossel.html")
 
-@app.route("/admin/servicos")
+    os.makedirs("static/uploads", exist_ok=True)
+
+    with get_db() as conn:
+        with conn.cursor() as cur:
+
+            if request.method == "POST":
+                imagem = request.files.get("imagem_carrossel")
+
+                if imagem and imagem.filename != "":
+                    caminho = f"static/uploads/{imagem.filename}"
+                    imagem.save(caminho)
+
+                    cur.execute(
+                        "INSERT INTO carrossel (imagem) VALUES (%s)",
+                        ("/" + caminho,)
+                    )
+                    conn.commit()
+
+                return redirect(url_for("admin_carrossel"))
+
+            cur.execute("SELECT * FROM carrossel ORDER BY id DESC")
+            imagens = cur.fetchall()
+
+    return render_template("admin_carrossel.html", imagens=imagens)
+
+@app.route("/admin/carrossel/excluir/<int:id>")
+def excluir_carrossel(id):
+    if not session.get("admin"):
+        return redirect(url_for("login"))
+
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM carrossel WHERE id=%s", (id,))
+            conn.commit()
+
+    return redirect(url_for("admin_carrossel"))
+
+# ================== SERVIÇOS ==================
+
+@app.route("/admin/servicos", methods=["GET", "POST"])
 def admin_servicos():
     if not session.get("admin"):
         return redirect(url_for("login"))
-    return render_template("admin_servicos.html")
 
-@app.route("/admin/horarios")
+    os.makedirs("static/uploads", exist_ok=True)
+
+    with get_db() as conn:
+        with conn.cursor() as cur:
+
+            if request.method == "POST":
+                nome = request.form.get("nome")
+                preco = request.form.get("preco")
+                descricao = request.form.get("descricao")
+                imagem = request.files.get("imagem")
+
+                caminho_img = None
+
+                if imagem and imagem.filename != "":
+                    caminho = f"static/uploads/{imagem.filename}"
+                    imagem.save(caminho)
+                    caminho_img = "/" + caminho
+
+                cur.execute("""
+                    INSERT INTO servicos (nome, preco, descricao, imagem)
+                    VALUES (%s, %s, %s, %s)
+                """, (nome, preco, descricao, caminho_img))
+                conn.commit()
+
+                return redirect(url_for("admin_servicos"))
+
+            cur.execute("SELECT * FROM servicos ORDER BY id DESC")
+            servicos = cur.fetchall()
+
+    return render_template("admin_servicos.html", servicos=servicos)
+
+@app.route("/admin/servicos/excluir/<int:id>")
+def excluir_servico(id):
+    if not session.get("admin"):
+        return redirect(url_for("login"))
+
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM servicos WHERE id=%s", (id,))
+            conn.commit()
+
+    return redirect(url_for("admin_servicos"))
+
+# ================== HORÁRIOS ==================
+
+@app.route("/admin/horarios", methods=["GET", "POST"])
 def admin_horarios():
     if not session.get("admin"):
         return redirect(url_for("login"))
-    return render_template("admin_horarios.html")
 
-@app.route("/admin/seguranca")
+    with get_db() as conn:
+        with conn.cursor() as cur:
+
+            if request.method == "POST":
+                novo = request.form.get("novo_horario")
+                cur.execute("INSERT INTO horarios (hora) VALUES (%s)", (novo,))
+                conn.commit()
+                return redirect(url_for("admin_horarios"))
+
+            cur.execute("SELECT * FROM horarios ORDER BY hora")
+            horarios = cur.fetchall()
+
+    return render_template("admin_horarios.html", horarios=horarios)
+
+@app.route("/admin/horarios/excluir/<int:id>")
+def excluir_horario(id):
+    if not session.get("admin"):
+        return redirect(url_for("login"))
+
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM horarios WHERE id=%s", (id,))
+            conn.commit()
+
+    return redirect(url_for("admin_horarios"))
+
+# ================== SEGURANÇA ==================
+
+@app.route("/admin/seguranca", methods=["GET", "POST"])
 def admin_seguranca():
     if not session.get("admin"):
         return redirect(url_for("login"))
+
+    if request.method == "POST":
+        usuario = request.form.get("usuario")
+        senha = request.form.get("senha")
+
+        senha_hash = generate_password_hash(senha)
+
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "UPDATE admin SET usuario=%s, senha=%s WHERE id=1",
+                    (usuario, senha_hash)
+                )
+                conn.commit()
+
+        session.clear()
+        return redirect(url_for("login"))
+
     return render_template("admin_seguranca.html")
 
 # ================== START ==================
