@@ -1,38 +1,55 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <title>Carrossel</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <style>
-        body { font-family: 'Poppins', sans-serif; background:#f5f5f5; }
-        .container { max-width:700px; margin:40px auto; }
-        h1 { text-align:center; color:#6f4b44; font-family: 'Allura', cursive; font-size:3rem; }
-        form { display:flex; justify-content:center; margin-bottom:30px; gap:10px; }
-        input[type=file] { padding:5px; }
-        button { padding:5px 15px; background:#aa4444; color:white; border:none; border-radius:5px; cursor:pointer; }
-        .grid-imagens { display:grid; grid-template-columns: repeat(auto-fit, minmax(120px,1fr)); gap:15px; }
-        .grid-imagens img { width:100%; border-radius:10px; border:2px solid rgba(255,255,255,0.3); }
-        .excluir { text-align:center; margin-top:5px; display:block; color:#aa4444; text-decoration:none; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carrossel - Patricia Lima</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<link href="https://fonts.googleapis.com/css2?family=Allura&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+.titulo-admin { font-family:'Allura', cursive; font-size:3rem; color:#6f4b44; text-align:center; margin-top:30px; }
+.form-carrossel { max-width:600px; margin:30px auto; background: rgba(255,255,255,0.2); padding:25px; border-radius:20px; backdrop-filter:blur(10px);}
+.input-file { width:100%; padding:12px; border-radius:10px; border:1px solid rgba(111,75,68,0.2); background: rgba(255,255,255,0.5); margin-top:5px; }
+.btn-salvar { width:100%; padding:15px; background:#6f4b44; color:white; border:none; border-radius:30px; font-weight:bold; cursor:pointer; margin-top:25px; transition:0.3s;}
+.btn-salvar:hover { background:#5a3d37; transform:translateY(-2px);}
+.grid-imagens { display:grid; grid-template-columns: repeat(auto-fill,minmax(150px,1fr)); gap:15px; margin-top:20px;}
+.img-carrossel { width:100%; border-radius:15px; object-fit:cover; height:120px; transition:0.3s;}
+.img-carrossel:first-child { border:2px solid #6f4b44; height:200px; }
+.btn-excluir { margin-top:5px; display:block; width:100%; background:#aa4444; color:white; border:none; border-radius:20px; padding:8px; cursor:pointer; transition:0.3s;}
+.btn-excluir:hover { background:#8a3333;}
+.btn-voltar { display:inline-block; text-decoration:none; color:#6f4b44; font-weight:bold; margin-top:15px;}
+</style>
 </head>
 <body>
-    <div class="container">
-        <h1>Carrossel</h1>
-        <form method="POST" enctype="multipart/form-data">
-            <input type="file" name="imagem_carrossel" required>
-            <button type="submit">Adicionar</button>
-        </form>
+<div class="container">
+<h1 class="titulo-admin">🖼️ Carrossel de Imagens</h1>
+<form method="POST" enctype="multipart/form-data" class="form-carrossel">
+<label>Adicionar Imagem:</label>
+<input type="file" name="imagem_carrossel" class="input-file" accept="image/*">
+<button type="submit" class="btn-salvar">✨ Adicionar</button>
+</form>
 
-        <div class="grid-imagens">
-            {% for img in imagens %}
-            <div>
-                <img src="{{ img.imagem }}" alt="Carrossel">
-                <a href="{{ url_for('excluir_carrossel', id=img.id) }}" class="excluir">Excluir</a>
-            </div>
-            {% endfor %}
-        </div>
-        <a href="{{ url_for('painel') }}" style="display:block; text-align:center; margin-top:20px; color:#6f4b44;">⬅ Voltar</a>
-    </div>
+<div class="grid-imagens">
+{% for img in imagens %}
+<div>
+<img src="{{ img['imagem'] }}" class="img-carrossel">
+<form action="{{ url_for('excluir_carrossel', id=img['id']) }}" method="get">
+<button type="submit" class="btn-excluir">🗑️ Excluir</button>
+</form>
+</div>
+{% endfor %}
+</div>
+
+<div style="text-align:center; margin-top:20px;">
+<a href="{{ url_for('painel') }}" class="btn-voltar">⬅ Voltar ao Painel</a>
+</div>
+</div>
+<footer class="rodape">
+<div class="rodape-conteudo">
+<p>&copy; <span id="ano-atual"></span> Patricia Lima — Todos os direitos reservados.</p>
+<p class="assinatura">Desenvolvido por <a href="https://seulink.com" target="_blank">NY Design Web</a></p>
+</div>
+</footer>
+<script>document.getElementById('ano-atual').textContent=new Date().getFullYear();</script>
 </body>
 </html>

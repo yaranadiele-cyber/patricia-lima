@@ -1,47 +1,64 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <title>Serviços</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <style>
-        body { font-family: 'Poppins', sans-serif; background:#f5f5f5; }
-        .container { max-width:800px; margin:40px auto; }
-        h1 { text-align:center; color:#6f4b44; font-family: 'Allura', cursive; font-size:3rem; }
-        form { display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:30px; }
-        input, textarea { padding:8px; width:100%; border-radius:5px; border:1px solid #ccc; }
-        button { grid-column:span 2; padding:10px; background:#aa4444; color:white; border:none; border-radius:5px; cursor:pointer; }
-        .grid-servicos { display:grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap:15px; }
-        .card-servico { background:rgba(255,255,255,0.2); padding:10px; border-radius:10px; text-align:center; border:1px solid rgba(255,255,255,0.3); }
-        .card-servico img { width:100%; border-radius:5px; }
-        .excluir { display:block; margin-top:5px; color:#aa4444; text-decoration:none; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Serviços - Patricia Lima</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<link href="https://fonts.googleapis.com/css2?family=Allura&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+.titulo-admin { font-family:'Allura', cursive; font-size:3rem; color:#6f4b44; text-align:center; margin-top:30px;}
+.form-servicos { max-width:600px; margin:30px auto; background: rgba(255,255,255,0.2); padding:25px; border-radius:20px; backdrop-filter:blur(10px);}
+input, textarea { width:100%; padding:12px; border-radius:10px; border:1px solid rgba(111,75,68,0.2); background: rgba(255,255,255,0.5); margin-top:5px;}
+.btn-salvar { width:100%; padding:15px; background:#6f4b44; color:white; border:none; border-radius:30px; font-weight:bold; cursor:pointer; margin-top:25px; transition:0.3s;}
+.btn-salvar:hover { background:#5a3d37; transform:translateY(-2px);}
+.grid-servicos { display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-top:20px;}
+.card-servico { background: rgba(255,255,255,0.2); padding:15px; border-radius:20px; text-align:center; backdrop-filter:blur(10px);}
+.card-servico img { width:100%; height:150px; object-fit:cover; border-radius:15px;}
+.btn-excluir { margin-top:5px; display:block; width:100%; background:#aa4444; color:white; border:none; border-radius:20px; padding:8px; cursor:pointer; transition:0.3s;}
+.btn-excluir:hover { background:#8a3333;}
+.btn-voltar { display:inline-block; text-decoration:none; color:#6f4b44; font-weight:bold; margin-top:15px;}
+</style>
 </head>
 <body>
-    <div class="container">
-        <h1>Serviços</h1>
-        <form method="POST" enctype="multipart/form-data">
-            <input type="text" name="nome" placeholder="Nome do serviço" required>
-            <input type="text" name="preco" placeholder="Preço" required>
-            <textarea name="descricao" placeholder="Descrição" rows="2" required></textarea>
-            <input type="file" name="imagem" required>
-            <button type="submit">Adicionar Serviço</button>
-        </form>
+<div class="container">
+<h1 class="titulo-admin">📋 Gerenciar Serviços</h1>
+<form method="POST" enctype="multipart/form-data" class="form-servicos">
+<label>Nome do Serviço:</label>
+<input type="text" name="nome" required>
+<label>Preço:</label>
+<input type="text" name="preco" required>
+<label>Descrição:</label>
+<textarea name="descricao" rows="3" required></textarea>
+<label>Imagem:</label>
+<input type="file" name="imagem" accept="image/*">
+<button type="submit" class="btn-salvar">✨ Adicionar Serviço</button>
+</form>
 
-        <div class="grid-servicos">
-            {% for s in servicos %}
-            <div class="card-servico">
-                {% if s.imagem %}
-                <img src="{{ s.imagem }}" alt="{{ s.nome }}">
-                {% endif %}
-                <h3>{{ s.nome }}</h3>
-                <p>{{ s.preco }}</p>
-                <p>{{ s.descricao }}</p>
-                <a href="{{ url_for('excluir_servico', id=s.id) }}" class="excluir">Excluir</a>
-            </div>
-            {% endfor %}
-        </div>
-        <a href="{{ url_for('painel') }}" style="display:block; text-align:center; margin-top:20px; color:#6f4b44;">⬅ Voltar</a>
-    </div>
+<div class="grid-servicos">
+{% for serv in servicos %}
+<div class="card-servico">
+<img src="{{ serv['imagem'] }}" alt="{{ serv['nome'] }}">
+<h3>{{ serv['nome'] }}</h3>
+<p>{{ serv['preco'] }}</p>
+<p>{{ serv['descricao'] }}</p>
+<form action="{{ url_for('excluir_servico', id=serv['id']) }}" method="get">
+<button type="submit" class="btn-excluir">🗑️ Excluir</button>
+</form>
+</div>
+{% endfor %}
+</div>
+
+<div style="text-align:center; margin-top:20px;">
+<a href="{{ url_for('painel') }}" class="btn-voltar">⬅ Voltar ao Painel</a>
+</div>
+</div>
+<footer class="rodape">
+<div class="rodape-conteudo">
+<p>&copy; <span id="ano-atual"></span> Patricia Lima — Todos os direitos reservados.</p>
+<p class="assinatura">Desenvolvido por <a href="https://seulink.com" target="_blank">NY Design Web</a></p>
+</div>
+</footer>
+<script>document.getElementById('ano-atual').textContent=new Date().getFullYear();</script>
 </body>
 </html>

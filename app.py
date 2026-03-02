@@ -26,8 +26,7 @@ def init_db():
         try:
             with get_db() as conn:
                 with conn.cursor() as cur:
-
-                    # Tabela admin
+                    # Admin
                     cur.execute("""
                         CREATE TABLE IF NOT EXISTS admin (
                             id SERIAL PRIMARY KEY,
@@ -35,8 +34,7 @@ def init_db():
                             senha TEXT
                         )
                     """)
-
-                    # Tabela serviços
+                    # Serviços
                     cur.execute("""
                         CREATE TABLE IF NOT EXISTS servicos (
                             id SERIAL PRIMARY KEY,
@@ -46,24 +44,36 @@ def init_db():
                             imagem TEXT
                         )
                     """)
-
-                    # Tabela carrossel
+                    # Carrossel
                     cur.execute("""
                         CREATE TABLE IF NOT EXISTS carrossel (
                             id SERIAL PRIMARY KEY,
                             imagem TEXT
                         )
                     """)
-
-                    # Tabela horários
+                    # Horários
                     cur.execute("""
                         CREATE TABLE IF NOT EXISTS horarios (
                             id SERIAL PRIMARY KEY,
                             hora TEXT
                         )
                     """)
-
-                    # Admin padrão
+                    # Configurações de aparência / Quem Sou
+                    cur.execute("""
+                        CREATE TABLE IF NOT EXISTS config (
+                            id SERIAL PRIMARY KEY,
+                            nome TEXT,
+                            profissao TEXT,
+                            texto_quem_sou TEXT,
+                            foto_perfil TEXT,
+                            whatsapp TEXT,
+                            instagram TEXT,
+                            localizacao TEXT,
+                            cor_texto_principal TEXT,
+                            cor_botoes TEXT
+                        )
+                    """)
+                    # Cria admin padrão se não existir
                     cur.execute("SELECT * FROM admin LIMIT 1")
                     if not cur.fetchone():
                         senha_hash = generate_password_hash("1234")
@@ -71,16 +81,23 @@ def init_db():
                             "INSERT INTO admin (usuario, senha) VALUES (%s, %s)",
                             ("admin", senha_hash)
                         )
-
+                    # Cria config padrão se não existir
+                    cur.execute("SELECT * FROM config LIMIT 1")
+                    if not cur.fetchone():
+                        cur.execute("""
+                            INSERT INTO config (nome, profissao, texto_quem_sou, foto_perfil,
+                                                whatsapp, instagram, localizacao,
+                                                cor_texto_principal, cor_botoes)
+                            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                        """, ("Patricia Lima", "Profissional de Beleza", "Aqui vai o texto 'Quem Sou'",
+                              "", "", "", "", "#6f4b44", "#6f4b44"))
                     conn.commit()
                     print("Banco inicializado com sucesso!")
                     return
-
         except Exception as e:
             print("Erro ao conectar no banco, tentando novamente...", e)
             tentativas -= 1
             time.sleep(3)
-
     print("Não foi possível conectar ao banco.")
 
 # ================== SITE ==================
@@ -88,41 +105,43 @@ def init_db():
 def index():
     with get_db() as conn:
         with conn.cursor() as cur:
-            cur.execute("SELECT * FROM carrossel ORDER BY id DESC")
-            imagens = cur.fetchall()
+            cur.execute("SELECT * FROM carrossel ORDER BY id ASC")
+            carrossel = cur.fetchall()
             cur.execute("SELECT * FROM servicos ORDER BY id DESC")
             servicos = cur.fetchall()
-    return render_template("index.html", imagens=imagens, servicos=servicos)
+            cur.execute("SELECT * FROM config LIMIT 1")
+            config = cur.fetchone()
+    return render_template("index.html", carrossel=carrossel, servicos=servicos, config=config)
 
 @app.route("/quemsou")
 def quemsou():
-    return render_template("quemsou.html")
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM config LIMIT 1")
+            config = cur.fetchone()
+    return render_template("quemsou.html", config=config)
 
 @app.route("/atendimento")
 def atendimento():
     return render_template("atendimento.html")
 
 # ================== LOGIN ==================
-@app.route("/login", methods=["GET", "POST"])
+@app.route("/login", methods=["GET","POST"])
 def login():
-    if request.method == "POST":
-        user = request.form.get("usuario")
+    if request.method=="POST":
+        usuario = request.form.get("usuario")
         senha_digitada = request.form.get("senha")
-
         try:
             with get_db() as conn:
                 with conn.cursor() as cur:
-                    cur.execute("SELECT * FROM admin WHERE usuario=%s", (user,))
+                    cur.execute("SELECT * FROM admin WHERE usuario=%s", (usuario,))
                     admin = cur.fetchone()
-
-            if admin and check_password_hash(admin["senha"], senha_digitada):
-                session["admin"] = True
+            if admin and check_password_hash(admin['senha'], senha_digitada):
+                session["admin"]=True
                 return redirect(url_for("painel"))
-
         except Exception as e:
-            print("Erro no login:", e)
-            return "Erro interno no servidor."
-
+            print("Erro login:", e)
+            return "Erro interno"
     return render_template("admin.html")
 
 @app.route("/logout")
@@ -138,147 +157,153 @@ def painel():
     return render_template("painel.html")
 
 # ================== CARROSSEL ==================
-@app.route("/admin/carrossel", methods=["GET", "POST"])
+@app.route("/admin/carrossel", methods=["GET","POST"])
 def admin_carrossel():
     if not session.get("admin"):
         return redirect(url_for("login"))
-
     os.makedirs("static/uploads", exist_ok=True)
-
     with get_db() as conn:
         with conn.cursor() as cur:
-            if request.method == "POST":
+            if request.method=="POST":
                 imagem = request.files.get("imagem_carrossel")
-                if imagem and imagem.filename != "":
+                if imagem and imagem.filename!="":
                     caminho = f"static/uploads/{imagem.filename}"
                     imagem.save(caminho)
-                    cur.execute(
-                        "INSERT INTO carrossel (imagem) VALUES (%s)",
-                        ("/" + caminho,)
-                    )
+                    cur.execute("INSERT INTO carrossel (imagem) VALUES (%s)", ("/"+caminho,))
                     conn.commit()
                 return redirect(url_for("admin_carrossel"))
-
-            cur.execute("SELECT * FROM carrossel ORDER BY id DESC")
+            cur.execute("SELECT * FROM carrossel ORDER BY id ASC")
             imagens = cur.fetchall()
-
     return render_template("admin_carrossel.html", imagens=imagens)
 
 @app.route("/admin/carrossel/excluir/<int:id>")
 def excluir_carrossel(id):
     if not session.get("admin"):
         return redirect(url_for("login"))
-
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute("DELETE FROM carrossel WHERE id=%s", (id,))
             conn.commit()
-
     return redirect(url_for("admin_carrossel"))
 
 # ================== SERVIÇOS ==================
-@app.route("/admin/servicos", methods=["GET", "POST"])
+@app.route("/admin/servicos", methods=["GET","POST"])
 def admin_servicos():
     if not session.get("admin"):
         return redirect(url_for("login"))
-
     os.makedirs("static/uploads", exist_ok=True)
-
     with get_db() as conn:
         with conn.cursor() as cur:
-            if request.method == "POST":
+            if request.method=="POST":
                 nome = request.form.get("nome")
                 preco = request.form.get("preco")
                 descricao = request.form.get("descricao")
                 imagem = request.files.get("imagem")
-
-                caminho_img = None
-                if imagem and imagem.filename != "":
-                    caminho = f"static/uploads/{imagem.filename}"
+                caminho_img=None
+                if imagem and imagem.filename!="":
+                    caminho=f"static/uploads/{imagem.filename}"
                     imagem.save(caminho)
-                    caminho_img = "/" + caminho
-
+                    caminho_img="/"+caminho
                 cur.execute("""
                     INSERT INTO servicos (nome, preco, descricao, imagem)
-                    VALUES (%s, %s, %s, %s)
-                """, (nome, preco, descricao, caminho_img))
+                    VALUES (%s,%s,%s,%s)
+                """,(nome,preco,descricao,caminho_img))
                 conn.commit()
                 return redirect(url_for("admin_servicos"))
-
             cur.execute("SELECT * FROM servicos ORDER BY id DESC")
-            servicos = cur.fetchall()
-
+            servicos=cur.fetchall()
     return render_template("admin_servicos.html", servicos=servicos)
 
 @app.route("/admin/servicos/excluir/<int:id>")
 def excluir_servico(id):
     if not session.get("admin"):
         return redirect(url_for("login"))
-
     with get_db() as conn:
         with conn.cursor() as cur:
-            cur.execute("DELETE FROM servicos WHERE id=%s", (id,))
+            cur.execute("DELETE FROM servicos WHERE id=%s",(id,))
             conn.commit()
-
     return redirect(url_for("admin_servicos"))
 
+# ================== APARÊNCIA ==================
+@app.route("/admin/aparencia", methods=["GET","POST"])
+def admin_aparencia():
+    if not session.get("admin"):
+        return redirect(url_for("login"))
+    os.makedirs("static/uploads", exist_ok=True)
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM config LIMIT 1")
+            config=cur.fetchone()
+            if request.method=="POST":
+                nome=request.form.get("nome")
+                profissao=request.form.get("profissao")
+                texto=request.form.get("texto")
+                whatsapp=request.form.get("whatsapp")
+                instagram=request.form.get("instagram")
+                localizacao=request.form.get("localizacao")
+                cor_txt=request.form.get("cor_txt")
+                cor_btn=request.form.get("cor_btn")
+                foto_perfil=request.files.get("foto_perfil")
+                caminho_img=config['foto_perfil']
+                if foto_perfil and foto_perfil.filename!="":
+                    caminho=f"static/uploads/{foto_perfil.filename}"
+                    foto_perfil.save(caminho)
+                    caminho_img="/"+caminho
+                cur.execute("""
+                    UPDATE config SET nome=%s, profissao=%s, texto_quem_sou=%s,
+                        whatsapp=%s, instagram=%s, localizacao=%s,
+                        cor_texto_principal=%s, cor_botoes=%s, foto_perfil=%s
+                    WHERE id=%s
+                """,(nome,profissao,texto,whatsapp,instagram,localizacao,cor_txt,cor_btn,caminho_img,config['id']))
+                conn.commit()
+                return redirect(url_for("admin_aparencia"))
+    return render_template("admin_aparencia.html", config=config)
+
 # ================== HORÁRIOS ==================
-@app.route("/admin/horarios", methods=["GET", "POST"])
+@app.route("/admin/horarios", methods=["GET","POST"])
 def admin_horarios():
     if not session.get("admin"):
         return redirect(url_for("login"))
-
     with get_db() as conn:
         with conn.cursor() as cur:
-            if request.method == "POST":
-                novo = request.form.get("novo_horario")
-                cur.execute("INSERT INTO horarios (hora) VALUES (%s)", (novo,))
+            if request.method=="POST":
+                novo=request.form.get("novo_horario")
+                cur.execute("INSERT INTO horarios (hora) VALUES (%s)",(novo,))
                 conn.commit()
                 return redirect(url_for("admin_horarios"))
-
             cur.execute("SELECT * FROM horarios ORDER BY hora")
-            horarios = cur.fetchall()
-
+            horarios=cur.fetchall()
     return render_template("admin_horarios.html", horarios=horarios)
 
 @app.route("/admin/horarios/excluir/<int:id>")
 def excluir_horario(id):
     if not session.get("admin"):
         return redirect(url_for("login"))
-
     with get_db() as conn:
         with conn.cursor() as cur:
-            cur.execute("DELETE FROM horarios WHERE id=%s", (id,))
+            cur.execute("DELETE FROM horarios WHERE id=%s",(id,))
             conn.commit()
-
     return redirect(url_for("admin_horarios"))
 
 # ================== SEGURANÇA ==================
-@app.route("/admin/seguranca", methods=["GET", "POST"])
+@app.route("/admin/seguranca", methods=["GET","POST"])
 def admin_seguranca():
     if not session.get("admin"):
         return redirect(url_for("login"))
-
-    if request.method == "POST":
-        usuario = request.form.get("usuario")
-        senha = request.form.get("senha")
-        senha_hash = generate_password_hash(senha)
-
-        with get_db() as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    "UPDATE admin SET usuario=%s, senha=%s WHERE id=1",
-                    (usuario, senha_hash)
-                )
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            if request.method=="POST":
+                usuario=request.form.get("usuario")
+                senha=request.form.get("senha")
+                senha_hash=generate_password_hash(senha)
+                cur.execute("UPDATE admin SET usuario=%s, senha=%s WHERE id=1",(usuario,senha_hash))
                 conn.commit()
-
-        session.clear()
-        return redirect(url_for("login"))
-
+                session.clear()
+                return redirect(url_for("login"))
     return render_template("admin_seguranca.html")
 
 # ================== START ==================
 init_db()
 
-if __name__ == "__main__":
+if __name__=="__main__":
     app.run(debug=True)

@@ -1,78 +1,71 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aparência - Patricia Lima</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Allura&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    <style>
-        .titulo-admin { font-family: 'Allura', cursive; font-size: 3rem; color: #6f4b44; text-align: center; }
-        label { display: block; margin-top: 15px; color: #6f4b44; font-weight: 600; font-size: 0.9rem; }
-        input, textarea, select { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(111,75,68,0.2); background: rgba(255,255,255,0.5); margin-top: 5px; }
-        .grid-cores { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .btn-salvar { width: 100%; padding: 15px; background: #6f4b44; color: white; border: none; border-radius: 30px; font-weight: bold; cursor: pointer; margin-top: 25px; transition: 0.3s; }
-        .btn-salvar:hover { background: #5a3d37; transform: translateY(-2px); }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aparência - Patricia Lima</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<link href="https://fonts.googleapis.com/css2?family=Allura&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+.titulo-admin { font-family: 'Allura', cursive; font-size: 3rem; color: #6f4b44; text-align: center; margin-top:30px;}
+label { display:block; margin-top:15px; color:#6f4b44; font-weight:600; font-size:0.9rem;}
+input, textarea, select { width:100%; padding:12px; border-radius:10px; border:1px solid rgba(111,75,68,0.2); background: rgba(255,255,255,0.5); margin-top:5px;}
+.grid-cores { display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-top:15px;}
+.btn-salvar { width:100%; padding:15px; background:#6f4b44; color:white; border:none; border-radius:30px; font-weight:bold; cursor:pointer; margin-top:25px; transition:0.3s; }
+.btn-salvar:hover { background:#5a3d37; transform:translateY(-2px); }
+.btn-voltar { display:inline-block; text-decoration:none; color:#6f4b44; font-weight:bold; margin-top:15px; }
+</style>
 </head>
 <body>
-<div class="container" style="max-width: 600px;">
-    <h1 class="titulo-admin">🎨 Personalizar Site</h1>
-    
-    <form method="POST" enctype="multipart/form-data">
-        <label>Foto de Perfil (Quem Sou):</label>
-        <input type="file" name="foto_perfil" accept="image/*">
+<div class="container" style="max-width:600px;">
+<h1 class="titulo-admin">🎨 Personalizar Site</h1>
+<form method="POST" enctype="multipart/form-data">
+<label>Foto de Perfil (Quem Sou):</label>
+<input type="file" name="foto_perfil" accept="image/*">
 
-        <label>Nome Exibido:</label>
-        <input type="text" name="nome" value="{{ config['nome'] }}">
+<label>Nome Exibido:</label>
+<input type="text" name="nome" value="{{ config['nome'] }}">
 
-        <label>Profissão/Subtítulo:</label>
-        <input type="text" name="profissao" value="{{ config['profissao'] }}">
+<label>Profissão/Subtítulo:</label>
+<input type="text" name="profissao" value="{{ config['profissao'] }}">
 
-        <label>Texto "Quem Sou":</label>
-        <textarea name="texto" rows="4">{{ config['texto_quem_sou'] }}</textarea>
+<label>Texto "Quem Sou":</label>
+<textarea name="texto" rows="4">{{ config['texto_quem_sou'] }}</textarea>
 
-        <hr style="margin: 25px 0; opacity: 0.2;">
+<hr style="margin:25px 0; opacity:0.2;">
 
-        <label>📱 Seu WhatsApp (Apenas números com DDD e 55):</label>
-        <input type="text" name="whatsapp" value="{{ config['whatsapp'] or '' }}" placeholder="Ex: 5511999999999">
+<label>📱 WhatsApp:</label>
+<input type="text" name="whatsapp" value="{{ config['whatsapp'] or '' }}" placeholder="Ex: 5511999999999">
 
-        <label>📸 Instagram (Link ou @):</label>
-        <input type="text" name="instagram" value="{{ config['instagram'] or '' }}" placeholder="Ex: @patricia.lima">
+<label>📸 Instagram:</label>
+<input type="text" name="instagram" value="{{ config['instagram'] or '' }}" placeholder="Ex: @patricia.lima">
 
-        <label>📍 Link Google Maps (Localização):</label>
-        <input type="text" name="localizacao" value="{{ config['localizacao'] or '' }}" placeholder="Cole o link do Google Maps">
+<label>📍 Localização (Google Maps):</label>
+<input type="text" name="localizacao" value="{{ config['localizacao'] or '' }}" placeholder="Cole o link do Google Maps">
 
-        <div class="grid-cores">
-            <div>
-                <label>Cor do Texto:</label>
-                <input type="color" name="cor_txt" value="{{ config['cor_texto_principal'] }}">
-            </div>
-            <div>
-                <label>Cor dos Botões:</label>
-                <input type="color" name="cor_btn" value="{{ config['cor_botoes'] }}">
-            </div>
-        </div>
-
-        <button type="submit" class="btn-salvar">✨ Salvar Alterações</button>
-    </form>
-
-    <div style="text-align: center; margin-top: 20px;">
-        <a href="{{ url_for('painel') }}" class="btn-voltar">⬅ Voltar ao Painel</a>
-    </div>
+<div class="grid-cores">
+<div>
+<label>Cor do Texto:</label>
+<input type="color" name="cor_txt" value="{{ config['cor_texto_principal'] }}">
+</div>
+<div>
+<label>Cor dos Botões:</label>
+<input type="color" name="cor_btn" value="{{ config['cor_botoes'] }}">
+</div>
 </div>
 
- <footer class="rodape">
-    <div class="rodape-conteudo">
-        <p>&copy; <span id="ano-atual"></span> Patricia Lima — Todos os direitos reservados.</p>
-        <p class="assinatura">Desenvolvido por <a href="https://seulink.com" target="_blank">NY Design Web</a></p>
-    </div>
+<button type="submit" class="btn-salvar">✨ Salvar Alterações</button>
+</form>
+<div style="text-align:center; margin-top:20px;">
+<a href="{{ url_for('painel') }}" class="btn-voltar">⬅ Voltar ao Painel</a>
+</div>
+</div>
+<footer class="rodape">
+<div class="rodape-conteudo">
+<p>&copy; <span id="ano-atual"></span> Patricia Lima — Todos os direitos reservados.</p>
+<p class="assinatura">Desenvolvido por <a href="https://seulink.com" target="_blank">NY Design Web</a></p>
+</div>
 </footer>
-
-<script>
-    // Coloca o ano atual automaticamente
-    document.getElementById('ano-atual').textContent = new Date().getFullYear();
-</script>
-
+<script>document.getElementById('ano-atual').textContent=new Date().getFullYear();</script>
 </body>
 </html>

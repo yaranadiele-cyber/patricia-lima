@@ -1,44 +1,36 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <title>Painel Administrativo</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Allura&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Poppins', sans-serif; background: #f5f5f5; }
-        .container { max-width: 900px; margin: 40px auto; padding: 20px; }
-        .titulo-painel { font-family: 'Allura', cursive; font-size: 3.5rem; color: #6f4b44; text-align: center; margin-bottom: 30px; }
-        .grid-painel { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; }
-        .card-admin { 
-            background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            padding: 30px; border-radius: 20px; text-decoration: none; color: #6f4b44; font-weight: bold;
-            border: 1px solid rgba(255,255,255,0.3); display: flex; flex-direction: column; align-items: center; transition: 0.3s;
-            text-align: center;
-        }
-        .card-admin:hover { transform: translateY(-5px); background: rgba(255,255,255,0.4); }
-        .rodape { text-align:center; margin-top:50px; color:#6f4b44; font-size:0.9rem; }
-        .rodape a { color:#aa4444; text-decoration:none; }
-    </style>
+<meta charset="UTF-8">
+<title>Painel Administrativo</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<link href="https://fonts.googleapis.com/css2?family=Allura&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+<style>
+.titulo-painel { font-family: 'Allura', cursive; font-size: 3.5rem; color: #6f4b44; text-align: center; margin-top:30px;}
+.grid-painel { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 700px; margin: 40px auto; }
+.card-admin { background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); padding:30px; border-radius:20px; text-decoration:none; color:#6f4b44; font-weight:bold; display:flex; flex-direction:column; align-items:center; transition:0.3s; }
+.card-admin:hover { transform:translateY(-5px); background: rgba(255,255,255,0.4);}
+.btn-sair { display:block; text-align:center; color:#aa4444; text-decoration:none; margin-top:20px; font-weight:bold;}
+</style>
 </head>
 <body>
-    <div class="container">
-        <h1 class="titulo-painel">Painel de Controle</h1>
-        <div class="grid-painel">
-            <a href="{{ url_for('admin_carrossel') }}" class="card-admin"><span>🖼️</span><br>Carrossel</a>
-            <a href="{{ url_for('admin_servicos') }}" class="card-admin"><span>📋</span><br>Serviços</a>
-            <a href="{{ url_for('admin_horarios') }}" class="card-admin"><span>⏰</span><br>Horários</a>
-            <a href="{{ url_for('admin_seguranca') }}" class="card-admin"><span>🔐</span><br>Segurança</a>
-        </div>
-        <a href="{{ url_for('logout') }}" style="display:block; text-align:center; color:#aa4444; text-decoration:none; margin-top:20px;">🚪 Sair</a>
-    </div>
-
-    <footer class="rodape">
-        <p>&copy; <span id="ano-atual"></span> {{ config.nome }} — Todos os direitos reservados.</p>
-    </footer>
-
-<script>
-    document.getElementById('ano-atual').textContent = new Date().getFullYear();
-</script>
+<div class="container">
+<h1 class="titulo-painel">Painel de Controle</h1>
+<div class="grid-painel">
+<a href="{{ url_for('admin_aparencia') }}" class="card-admin">🎨<br>Aparência</a>
+<a href="{{ url_for('admin_carrossel') }}" class="card-admin">🖼️<br>Carrossel</a>
+<a href="{{ url_for('admin_servicos') }}" class="card-admin">📋<br>Serviços</a>
+<a href="{{ url_for('admin_horarios') }}" class="card-admin">⏰<br>Horários</a>
+<a href="{{ url_for('admin_seguranca') }}" class="card-admin">🔐<br>Segurança</a>
+</div>
+<a href="{{ url_for('logout') }}" class="btn-sair">🚪 Sair</a>
+</div>
+<footer class="rodape">
+<div class="rodape-conteudo">
+<p>&copy; <span id="ano-atual"></span> Patricia Lima — Todos os direitos reservados.</p>
+<p class="assinatura">Desenvolvido por <a href="https://seulink.com" target="_blank">NY Design Web</a></p>
+</div>
+</footer>
+<script>document.getElementById('ano-atual').textContent=new Date().getFullYear();</script>
 </body>
 </html>
